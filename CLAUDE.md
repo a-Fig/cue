@@ -24,6 +24,7 @@ stays short.
 | `public/` | The page the bot shows (`app.js`: transcript in, actions out). Plain ES modules, no build step |
 | `scripts/send-bot.mjs` | Creates the Recall bot for a meeting URL |
 | `scripts/check.mjs` | The CI check: every JS file parses, the server boots and guards its API |
+| `docs/VISION.md` | What Cue is for, what it holds to, and the open questions with their issues. A settled question's answer and reason go there, dated. It also compares Cue with Claude Meetings, the reference for judgment calls and design (Tyler, 2026-11-13) |
 
 ## Commands
 
@@ -48,6 +49,18 @@ Playwright renders any view without a Claude key (how PR screenshots get made).
   `/api/page` refuses internal addresses, but not DNS tricks.
 - The model is `claude-opus-5-5` at low effort (`CLAUDE_MODEL`, `CLAUDE_EFFORT`); every think
   call is billed, and research calls take several seconds.
+
+## Who is on what
+
+The split, as Tyler gave it on 2026-11-13. Issues are assigned to match.
+
+| Who | Area | Issues |
+|---|---|---|
+| Tyler (`a-Fig`) | Getting Cue into a Google Meet call | #4, #12, #16 |
+| Drew (`DhruvaKanna07`) | The agent: making it do what we want and be helpful in the meeting | #10, #11, #13, #14, #17, #18 |
+| Cara (`tthy-working`) and the fourth member | The demo video, and whatever else comes up | #9 |
+
+Google Meet is the call app to get working first.
 
 ## Issue labels
 
