@@ -338,10 +338,24 @@ ${lines || "(silence)"}`;
   const started = Date.now();
   const responses = [];
   let jev;
-  const done = (result) => {
+  // extra is a Gemini call's usage, added to any gate requests' own.
+  const done = (result, extra) => {
     const usage = tally(responses);
+    if (extra) {
+      for (const k of ["requests", "input", "cacheRead", "cacheWrite", "output", "searches", "fetches", "usd"]) usage[k] += extra[k] || 0;
+      Object.assign(usage, { model: extra.model, provider: extra.provider });
+    }
     if (jev?.usd) usage.usd += jev.usd;
     return { ...result, usage, ms: Date.now() - started, ...(jev && { gate: jev }) };
+  };
+  // The same last step for both providers: a video nobody asked for is dropped.
+  const finish = (actions, note, extra) => {
+    if (actions.some((a) => a.tool === "play_video") && !videoWasAsked(transcript)) {
+      // Its caption ("Playing ...") goes too, so the screen doesn't announce a video that isn't there.
+      actions = actions.filter((a) => a.tool !== "play_video" && a.tool !== "caption");
+      return done({ actions, note: "dropped play_video: nobody asked for one" }, extra);
+    }
+    return done({ actions, ...(note && { note }) }, extra);
   };
 
   const spokenTo = addressed || transcript.slice(-3).some((l) => ADDRESSED.test(l.text || ""));
@@ -356,7 +370,7 @@ ${lines || "(silence)"}`;
   // 2026-11-13: "if we're using gemini, we're using gemini").
   if (PROVIDER === "gemini") {
     const g = await thinkGemini({ system: SYSTEM, user, displayTools: DISPLAY_TOOLS });
-    return { ...g, ms: Date.now() - started };
+    return finish(g.actions, g.note, g.usage);
   }
 
   // pause_turn means a long server-tool turn paused; send it back to continue.
@@ -388,15 +402,9 @@ ${lines || "(silence)"}`;
       return done({ actions: [], note: "refusal" });
     }
 
-    let actions = response.content
+    return finish(response.content
       .filter((b) => b.type === "tool_use" && DISPLAY_NAMES.has(b.name))
-      .map((b) => ({ tool: b.name, input: b.input }));
-    if (actions.some((a) => a.tool === "play_video") && !videoWasAsked(transcript)) {
-      // Its caption ("Playing ...") goes too, so the screen doesn't announce a video that isn't there.
-      actions = actions.filter((a) => a.tool !== "play_video" && a.tool !== "caption");
-      return done({ actions, note: "dropped play_video: nobody asked for one" });
-    }
-    return done({ actions });
+      .map((b) => ({ tool: b.name, input: b.input })));
   }
   return done({ actions: [], note: "gave up after repeated pause_turn" });
 }
