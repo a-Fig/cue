@@ -1,6 +1,6 @@
 // Part of `npm run check`: the show_visual sanitizer (public/views/sanitize.js) against markup a
-// prompt-injected model might write (#61, #14). The browser's iframe sandbox and CSP are the second
-// layer; these cases are the first.
+// prompt-injected model might write (#61, #14). Showing the result as an SVG image (which can't
+// run scripts or load anything) is the second layer; these cases are the first.
 import { DOMParser } from "linkedom";
 import { sanitizeMarkup } from "../public/views/sanitize.js";
 

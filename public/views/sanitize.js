@@ -1,8 +1,8 @@
 // Cleans SVG or HTML that Claude wrote for show_visual (#61). Model output can be shaped by the web
 // pages it read (#14), so it is treated as hostile: an allowlist of drawing and text elements, no
 // event handlers, and no URL that leaves the document (only "#id" references survive). The result
-// is then shown in an iframe sandboxed without scripts, under a CSP that loads nothing but the
-// brand's fonts (visual.js), so a gap here still can't run code or call out.
+// is then shown as an <img> of an SVG (visual.js), which can't run scripts or load anything, so a
+// gap here still can't run code or call out.
 // Pure: it takes a DOMParser, so the CI check can run it under linkedom.
 
 const SVG_TAGS = [
