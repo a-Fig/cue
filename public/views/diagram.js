@@ -19,7 +19,7 @@ async function lib() {
   // Timelines and mindmaps color each section from cScale0..11; keep those on paper, alternating tints.
   const scale = {};
   for (let i = 0; i < 12; i++) {
-    scale[`cScale${i}`] = i % 2 ? dim : "#ffffff";
+    scale[`cScale${i}`] = i % 2 ? dim : paper;
     scale[`cScaleLabel${i}`] = ink;
     scale[`cScaleInv${i}`] = blue;
   }
@@ -27,7 +27,7 @@ async function lib() {
     startOnLoad: false, securityLevel: "strict", theme: "base",
     fontFamily: font,
     themeVariables: {
-      background: "#ffffff", fontFamily: font, fontSize: "22px",
+      background: dim, fontFamily: font, fontSize: "22px",
       primaryColor: paper, primaryTextColor: ink, primaryBorderColor: blue,
       secondaryColor: dim, secondaryTextColor: ink, secondaryBorderColor: blue,
       tertiaryColor: "#ffffff", tertiaryTextColor: ink, tertiaryBorderColor: line,

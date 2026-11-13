@@ -1,12 +1,29 @@
 /* Diagrams (views/diagram.js), on the paper sheet from style.css. diagram.js sizes the SVG to the
    box, so Mermaid's 22px labels stay 22px or larger unless the diagram is too big to fit. */
-.diagram h1 { margin: 0 0 24px; font: 650 56px/1.08 var(--cue-font-display); letter-spacing: -0.025em; }
+.diagram { padding-top: 116px; }
+.diagram h1 { margin: 0 0 24px; font: 400 68px/1.05 var(--cue-font-display); letter-spacing: -0.015em; }
 .diagram .diagram-box {
-  height: 500px; display: grid; place-items: center; overflow: hidden;
-  background: #ffffff; border: 1px solid var(--line); border-radius: 16px; padding: 20px;
+  height: 470px; display: grid; place-items: center; overflow: hidden; padding: 0 0 20px;
 }
-.diagram .diagram-box svg { display: block; animation: diagram-in 0.5s ease both; }
-@keyframes diagram-in { from { opacity: 0; } }
+.diagram .diagram-box svg { display: block; }
+/* Rounded paper boxes on blue lines; they come in one after another, left to right or top down. */
+.diagram .node rect, .diagram .node .label-container { rx: 18px; ry: 18px; stroke-width: 2px !important; }
+.diagram .flowchart-link { stroke-width: 2px !important; }
+.diagram .node { animation: diagram-in 0.55s var(--ease) both; }
+.diagram .node:nth-child(2) { animation-delay: 0.12s; } .diagram .node:nth-child(3) { animation-delay: 0.24s; }
+.diagram .node:nth-child(4) { animation-delay: 0.36s; } .diagram .node:nth-child(5) { animation-delay: 0.48s; }
+.diagram .node:nth-child(6) { animation-delay: 0.6s; } .diagram .node:nth-child(n+7) { animation-delay: 0.72s; }
+.diagram .edgePaths, .diagram .edgeLabels { animation: diagram-fade 0.6s ease 0.3s both; }
+@keyframes diagram-in { from { opacity: 0; transform: translateY(10px); } }
+@keyframes diagram-fade { from { opacity: 0; } }
+/* Unscoped on purpose: Mermaid measures each label in a scratch element at the top of the page, so
+   only a rule that applies there too makes the boxes wide enough for bold text. */
+.nodeLabel { font-weight: 700; }
+/* A flow's last step is where it is going: solid blue. */
+.diagram .flowchart g.nodes > g.node:last-child rect,
+.diagram .flowchart g.nodes > g.node:last-child .label-container { fill: var(--cue-blue) !important; }
+.diagram .flowchart g.nodes > g.node:last-child .nodeLabel,
+.diagram .flowchart g.nodes > g.node:last-child .nodeLabel p { color: var(--cue-paper) !important; }
 /* Grown in place: what was just added flashes in lime, then settles */
 .diagram .cue-new rect, .diagram .cue-new polygon, .diagram .cue-new circle, .diagram .cue-new path.node-bkg {
   animation: diagram-new 2.4s ease both;

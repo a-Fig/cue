@@ -53,15 +53,24 @@ function column(el, items, fresh, render) {
   }
 }
 
+const owners = new Map(); // owner → avatar colour, in the order they first got a task: blue, lime, ink
+
+// "Sam" → "SA", "Priya Patel" → "PP": the owner as an avatar, like a call app's tiles.
+const initials = (name) => {
+  const words = name.trim().split(/\s+/);
+  return (words.length > 1 ? words[0][0] + words.at(-1)[0] : name.slice(0, 2)).toUpperCase();
+};
+
 /** @param {{decisions: string[], action_items: {task: string, owner: string}[], open_questions: string[]}} input */
 export async function addNotes(input, view) {
   const el = await mountView("notes", `
     <h1>Meeting notes</h1>
     <div class="notes-grid">
-      <div class="col decisions"><h2>Decided <span class="count"></span></h2><ul></ul><p class="earlier"></p><p class="none">Nothing yet</p></div>
       <div class="col actions"><h2>Action items <span class="count"></span></h2><ul></ul><p class="earlier"></p><p class="none">Nothing yet</p></div>
+      <div class="col decisions"><h2>Decided <span class="count"></span></h2><ul></ul><p class="earlier"></p><p class="none">Nothing yet</p></div>
       <div class="col questions"><h2>Open questions <span class="count"></span></h2><ul></ul><p class="earlier"></p><p class="none">Nothing yet</p></div>
     </div>`);
+  el.classList.add("sheet");
 
   const d = addUnique(notes.decisions, (input.decisions || []).map((s) => clip(s, 110)), key);
   const a = addUnique(notes.action_items,
@@ -73,7 +82,11 @@ export async function addNotes(input, view) {
   column(el.querySelector(".decisions"), notes.decisions, fresh, (s) => make("li", "", s));
   column(el.querySelector(".actions"), notes.action_items, fresh, ({ task, owner }) => {
     const li = make("li");
-    li.append(make("span", "owner", owner || "Someone"), make("span", "task", task));
+    const who = owner || "Someone";
+    if (!owners.has(who)) owners.set(who, owners.size % 3);
+    const av = make("span", `owner c${owners.get(who)}`, initials(who));
+    av.title = who;
+    li.append(make("span", "box"), make("span", "task", task), av);
     return li;
   });
   column(el.querySelector(".questions"), notes.open_questions, fresh, (s) => make("li", "", s));
