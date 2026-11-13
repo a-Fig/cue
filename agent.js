@@ -181,7 +181,7 @@ async function gate(user, responses) {
 // video needs someone in the last few lines to have asked for one (#14).
 // Loose on purpose: a missed request costs a retry, while "play" in passing
 // only reopens the door the prompt rule still guards.
-const VIDEO_ASK = /\b(videos?|clips?|watch|play|trailer|footage|youtube|recording|demo reel|movie|film|scene|song|music)\b/i;
+const VIDEO_ASK = /\b(videos?|clips?|watch\w*|play\w*|trailers?|footage|youtube|recordings?|demo reel|movies?|films?|scenes?|songs?|music|keynotes?|talks?|speech(es)?|interviews?|commercials?|highlights|launch event)\b/i;
 export function videoWasAsked(transcript) {
   return transcript.slice(-6).some((l) => VIDEO_ASK.test(l.text || ""));
 }
