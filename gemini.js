@@ -25,9 +25,12 @@ function declaration({ name, description, input_schema }) {
   return d;
 }
 
-// Prices are not known here yet, so cost reads as zero (unknown), as in
-// agent.js for an unlisted model. Fill in from ai.google.dev/pricing.
-const PRICES = {};
+// Dollars per million tokens, output including thinking. gemini-3.8-flash's
+// introductory rate through 2026-12-31, from secondary sources (2026-11-13;
+// Google's own pricing page wasn't read); it doubles on 2027-01-01. Google
+// Search grounding is billed per query on top, and isn't counted here. A
+// model not listed prices at zero, so the cost reads as unknown.
+const PRICES = { "gemini-3.8-flash": { in: 0.75, out: 3.75 } };
 
 export async function thinkGemini({ system, user, displayTools }) {
   const key = process.env.GEMINI_API_KEY;
@@ -59,7 +62,7 @@ export async function thinkGemini({ system, user, displayTools }) {
     .map((p) => ({ tool: p.functionCall.name, input: p.functionCall.args || {} }));
 
   const u = json.usageMetadata || {};
-  const p = PRICES[MODEL] || { in: 0, out: 0 };
+  const p = PRICES[json.modelVersion] || PRICES[MODEL] || { in: 0, out: 0 };
   const cached = u.cachedContentTokenCount || 0;
   const input = (u.promptTokenCount || 0) + (u.toolUsePromptTokenCount || 0) - cached;
   const output = (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0);
