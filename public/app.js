@@ -92,7 +92,10 @@ function localCommand(text) {
 function connectRecall() {
   const ws = new WebSocket("wss://meeting-data.bot.recall.ai/api/v1/transcript");
   ws.onopen = () => { setStatus("listening"); log("transcript socket open"); };
+  let rawLogged = 0;
   ws.onmessage = (ev) => {
+    // The message shape is unverified (#4): log the first few raw, for Bot Explorer's console.
+    if (rawLogged < 10) { rawLogged++; console.log("[cue] raw transcript message", ev.data); }
     let msg;
     try { msg = JSON.parse(ev.data); } catch { return; }
     const d = msg?.data?.data || msg?.data || msg?.transcript || msg;
