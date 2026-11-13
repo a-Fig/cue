@@ -1,0 +1,16 @@
+{
+  "about": "Cue as the intern running the projector (Tyler, 2026-11-13, #10): nobody asks it anything, but things come up that the room would want on screen. A wondered-aloud question, a guessed number, options with prices, and a timeline laid out in words should go up unasked; the reactions in between should not.",
+  "lines": [
+    { "speaker": "Hana", "text": "So the pitch deck says we're targeting Europe first." },
+    { "speaker": "Luis", "text": "Right. I wonder what the population of Europe even is." },
+    { "speaker": "Hana", "text": "Probably like seven hundred million?", "expect": ["show_research"] },
+    { "speaker": "Luis", "text": "Huh, okay.", "expect": "quiet" },
+    { "speaker": "Hana", "text": "For hosting we got three quotes. AWS is twelve thousand a month, GCP came in at nine, and Azure is ten but with fifty thousand in credits." },
+    { "speaker": "Luis", "text": "GCP is cheapest but our team knows AWS best.", "expect": ["show_comparison", "show_slide"] },
+    { "speaker": "Hana", "text": "Let's think about it.", "expect": "quiet" },
+    { "speaker": "Luis", "text": "Timeline wise, code freeze is November fifteenth, beta goes out the twentieth, the marketing push starts the twenty fifth, and we launch December first.", "expect": ["show_diagram", "show_slide", "add_notes"] },
+    { "speaker": "Hana", "text": "Tight but doable.", "expect": "quiet" },
+    { "speaker": "Luis", "text": "Honestly I've never understood how VAT works across EU countries, that's going to bite us on pricing.", "expect": ["show_research", "show_diagram"] },
+    { "speaker": "Hana", "text": "Yeah, same.", "expect": "quiet" }
+  ]
+}

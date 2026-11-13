@@ -10,6 +10,7 @@
 //   "quiet"               Cue should do nothing at all
 //   ["show_research",...] one of these tools should be called (captions and
 //                         pings alongside are fine)
+//   ["quiet", "add_notes"] either is right: a judgment call (quiet, or this tool)
 //   "any"                 not scored (e.g. "Cue, mute", which the page handles)
 // A tick may also have a `check`: a regex the actions' text must match (e.g. the
 // right version number), or a helpful tool choice counts as "wrong" (#14).
@@ -21,10 +22,15 @@
 // explicitly or the run measures medium effort. The summary prints which ran.
 import { readdirSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { think } from "../agent.js";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { fetchReadable } from "../page.js";
 import { allFiller } from "../public/filler.js";
+
+// REPLAY_AGENT=<path to an agent.js> replays another branch's prompt (say, a
+// sibling worktree's) against these transcripts; the default is this checkout's.
+const { think } = await import(process.env.REPLAY_AGENT
+  ? pathToFileURL(path.resolve(process.env.REPLAY_AGENT)).href
+  : "../agent.js");
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const filters = (process.argv[2] || "").split(",");
@@ -38,6 +44,27 @@ function applyToState(st, { tool, input }) {
   switch (tool) {
     case "show_slide": st.screen = { mode: "slide", ...input }; return remember(`slide (${input.layout}): ${input.title}`);
     case "show_diagram": st.screen = { mode: "diagram", title: input.title, mermaid: input.mermaid }; return remember(`diagram: ${input.title}`);
+    case "add_notes": {
+      // public/views/notes.js: repeats are dropped by their letters and digits; the
+      // notes take the screen only when it's idle or on the notes, or when nothing
+      // new was passed (a request to show them).
+      const key = (x) => String(x).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+      st.notes ||= { decisions: [], action_items: [], open_questions: [] };
+      let added = 0;
+      for (const [list, toKey] of [["decisions", key], ["action_items", (x) => key(x.task)], ["open_questions", key]]) {
+        const seen = new Set(st.notes[list].map(toKey));
+        for (const item of input[list] || []) {
+          if (!toKey(item) || seen.has(toKey(item))) continue;
+          seen.add(toKey(item)); st.notes[list].push(item); added++;
+        }
+      }
+      const asked = !["decisions", "action_items", "open_questions"].some((l) => input[l]?.length);
+      if (asked || ["idle", "notes"].includes(st.screen.mode)) st.screen = { mode: "notes" };
+      return remember(asked ? "showed notes" : `notes: +${added}`);
+    }
+    case "show_comparison":
+      st.screen = { mode: "comparison", title: input.title, options: input.options, criteria: input.rows.map((r) => r.criterion), pick: input.pick };
+      return remember(`comparison: ${input.title}`);
     case "show_research": st.screen = { mode: "research", title: input.title, url: input.url }; return remember(`research: ${input.title}`);
     case "play_video": st.screen = { mode: "video", title: input.title, url: input.url }; return remember(`video: ${input.title}`);
     case "stop_video": st.screen = { mode: "idle" }; return remember("stopped video");
@@ -52,7 +79,7 @@ function judge(expect, actions, check) {
   if (expect === "any") return "unscored";
   const tools = actions.map((a) => a.tool);
   if (expect === "quiet") return tools.length ? "annoying" : "right-quiet";
-  if (!tools.length) return "missed";
+  if (!tools.length) return expect.includes("quiet") ? "right-quiet" : "missed";
   if (!tools.some((t) => expect.includes(t))) return "annoying";
   if (check && !new RegExp(check, "i").test(JSON.stringify(actions.map((a) => a.input)))) return "wrong";
   return "helpful";
@@ -82,6 +109,10 @@ async function highlightsFound({ url, highlights }) {
 }
 
 function brief({ tool, input }) {
+  if (tool === "add_notes") {
+    const items = [...input.decisions, ...input.action_items.map((a) => `${a.owner}: ${a.task}`), ...input.open_questions];
+    return `add_notes(${items.join("; ").slice(0, 90) || "show"})`;
+  }
   const s = input.title || input.text || input.url || (tool === "set_audio" ? `muted=${input.muted}` : "");
   return s ? `${tool}(${String(s).slice(0, 70)})` : tool;
 }
@@ -103,7 +134,7 @@ async function runTranscript(file) {
     else try {
       result = await think({
         transcript: lines.slice(0, i + 1).map(({ speaker, text }) => ({ speaker, text })),
-        screen: { ...st.screen, audioMuted: st.muted, screenHidden: st.hidden },
+        screen: { ...st.screen, audioMuted: st.muted, screenHidden: st.hidden, ...(st.notes && { notes: st.notes }) },
         recentActions: st.recentActions,
       });
     } catch (e) {

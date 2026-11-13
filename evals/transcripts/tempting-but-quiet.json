@@ -2,7 +2,7 @@
   "about": "Lines that look like triggers but aren't: a check asked of a teammate, a question about the team's own past that the web can't answer, a passing mention, a joke, a short brainstorm, and a follow-up on research already on screen.",
   "lines": [
     { "speaker": "Nina", "text": "Leo, can you check the error logs from last night's deploy after this?" },
-    { "speaker": "Leo", "text": "Yeah, will do.", "expect": "quiet" },
+    { "speaker": "Leo", "text": "Yeah, will do.", "expect": ["quiet", "add_notes"] },
     { "speaker": "Nina", "text": "What did we end up deciding about the pricing tiers last week? I forget." },
     { "speaker": "Omar", "text": "Hmm, I'd have to look at my notes.", "expect": "quiet" },
     { "speaker": "Leo", "text": "Side note, I was reading about the Artemis mission on the train, super cool stuff." },
@@ -12,7 +12,7 @@
     { "speaker": "Leo", "text": "Escape room sounds fun.", "expect": "quiet" },
     { "speaker": "Omar", "text": "Okay, real question, what's the current Node LTS version? We need it for the Docker image." },
     { "speaker": "Leo", "text": "Not sure, someone look it up?", "expect": ["show_research"] },
-    { "speaker": "Omar", "text": "Okay cool, so we bump the base image to that.", "expect": "quiet" },
+    { "speaker": "Omar", "text": "Okay cool, so we bump the base image to that.", "expect": ["quiet", "add_notes"] },
     { "speaker": "Nina", "text": "And the pipeline is basically the same as before, nothing new there.", "expect": "quiet" }
   ]
 }

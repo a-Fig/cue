@@ -8,7 +8,7 @@
     { "speaker": "Ravi", "text": "About seven hours direct, I did it last year." },
     { "speaker": "Jo", "text": "Oh nice, that's not bad.", "expect": "quiet" },
     { "speaker": "Sam", "text": "Budget wise, who knows what hotel prices will do by then." },
-    { "speaker": "Ravi", "text": "Yeah, it is what it is. We'll book early.", "expect": "quiet" },
-    { "speaker": "Jo", "text": "We should decide on the dates next week then.", "expect": "quiet" }
+    { "speaker": "Ravi", "text": "Yeah, it is what it is. We'll book early.", "expect": ["quiet", "add_notes", "show_research"] },
+    { "speaker": "Jo", "text": "We should decide on the dates next week then.", "expect": ["quiet", "add_notes"] }
   ]
 }

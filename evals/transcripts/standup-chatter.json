@@ -11,7 +11,7 @@
     { "speaker": "Priya", "text": "No, I think I'm fine, I'll ping you if it gets worse.", "expect": "quiet" },
     { "speaker": "Maya", "text": "Cool. Who knows what next sprint looks like, honestly, but let's get through this one." },
     { "speaker": "Leo", "text": "Yeah. Q and A session with design is Thursday, right?" },
-    { "speaker": "Maya", "text": "Thursday at two, yes.", "expect": "quiet" },
-    { "speaker": "Maya", "text": "Alright, that's it, thanks everyone.", "expect": "quiet" }
+    { "speaker": "Maya", "text": "Thursday at two, yes.", "expect": ["quiet", "add_notes"] },
+    { "speaker": "Maya", "text": "Alright, that's it, thanks everyone.", "expect": ["quiet", "add_notes"] }
   ]
 }
