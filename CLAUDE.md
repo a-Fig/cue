@@ -20,7 +20,8 @@ stays short.
 | Path | What |
 |---|---|
 | `server.js` | Node `http` server, no framework: serves `public/`, `POST /api/think`, `GET /api/page` (a page's readable text, for highlighting) |
-| `agent.js` | The Claude call: system prompt, display tools, web search/fetch. Stateless, one call per transcript "tick" |
+| `agent.js` | The Claude call: system prompt, display tools, web search. Stateless, one call per transcript "tick"; returns its tokens, cost and time |
+| `page.js` | A web page reduced to readable paragraphs, for `/api/page` and the replay |
 | `public/` | The page the bot shows (`app.js`: transcript in, actions out). Plain ES modules, no build step |
 | `scripts/cue.mjs` | `npm run cue`: starts the server and a tunnel if needed, sends the bot, takes it out again |
 | `scripts/send-bot.mjs`, `scripts/recall.mjs` | Sends the bot alone; Recall's bot API (create, status, leave) |
@@ -54,7 +55,8 @@ Playwright renders any view without a Claude key (how PR screenshots get made).
 - **Anyone who can open the page can spend the Claude key**, so the API checks `AGENT_TOKEN`.
   `/api/page` refuses internal addresses, but not DNS tricks.
 - The model is `claude-opus-5-5` at low effort (`CLAUDE_MODEL`, `CLAUDE_EFFORT`); every think
-  call is billed, and research calls take several seconds. Claude Code exports
+  call is billed. Sonnet 5.5 medium (2026-11-13 replay, #11): quiet tick ~$0.002 and 1.7 s,
+  research ~$0.02 and 5.5 s, about $0.90 per projected hour; `evals/replay.mjs` prints both per kind of tick. Claude Code exports
   `CLAUDE_EFFORT=medium` in its own shell, and `node --env-file` never overrides a variable
   that's already set, so a server started from an agent's shell runs at medium whatever `.env`
   says (2026-11-13).
