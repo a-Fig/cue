@@ -1,12 +1,12 @@
 {
-  "about": "A team settles action items, then describes a signup flow. A slide for the action items and a diagram for the flow help; tweaking either slightly does not need a redraw every turn.",
+  "about": "A team settles action items, then describes a signup flow. A slide or notes for the action items and a diagram for the flow help; tweaking either slightly does not need a redraw every turn.",
   "lines": [
     { "speaker": "Ana", "text": "Okay so before Friday we need three things." },
     { "speaker": "Ana", "text": "First, Ben ships the pricing page." },
     { "speaker": "Ben", "text": "Yep, I can do that by Wednesday." },
     { "speaker": "Ana", "text": "Second, Chloe writes the launch email." },
     { "speaker": "Chloe", "text": "Sure. And third is the analytics dashboard, that's me too?" },
-    { "speaker": "Ana", "text": "No, third is Dev setting up the analytics dashboard.", "expect": ["show_slide"] },
+    { "speaker": "Ana", "text": "No, third is Dev setting up the analytics dashboard.", "expect": ["show_slide", "add_notes"] },
     { "speaker": "Dev", "text": "Got it.", "expect": "quiet" },
     { "speaker": "Ben", "text": "Can we talk through the new signup flow? So the user enters their email, we send a magic link." },
     { "speaker": "Ben", "text": "They click it, land on onboarding, pick a plan, and if it's paid they go to Stripe checkout, otherwise straight to the dashboard.", "expect": ["show_diagram"] },

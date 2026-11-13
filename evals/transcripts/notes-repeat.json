@@ -1,0 +1,14 @@
+{
+  "about": "Decisions and tasks get restated in other words, as people do when wrapping up. Notes for the first mention help; adding the restatement again is a duplicate, and showing it again is churn.",
+  "lines": [
+    { "speaker": "Rosa", "text": "Okay, so we're going with Postgres for the new service, final answer." },
+    { "speaker": "Kenji", "text": "Agreed. And I'll write the migration script by Wednesday." },
+    { "speaker": "Rosa", "text": "Great.", "expect": ["add_notes", "show_slide"] },
+    { "speaker": "Kenji", "text": "One thing we haven't settled is who's on call for the launch weekend." },
+    { "speaker": "Rosa", "text": "Yeah, let's figure that out tomorrow.", "expect": ["add_notes"] },
+    { "speaker": "Kenji", "text": "So just to recap, the database is Postgres, and the migration script is on me for Wednesday." },
+    { "speaker": "Rosa", "text": "Right, that's it.", "expect": "quiet" },
+    { "speaker": "Kenji", "text": "And the on-call question is still open, we'll pick that tomorrow.", "expect": "quiet" },
+    { "speaker": "Rosa", "text": "Cool, thanks all.", "expect": "quiet" }
+  ]
+}

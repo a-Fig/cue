@@ -7,6 +7,6 @@
     { "speaker": "Marcus", "text": "Also isn't the Postgres max row size like one gigabyte?" },
     { "speaker": "Elena", "text": "No, I'm pretty sure it's way smaller than that, like eight kilobytes or something." },
     { "speaker": "Marcus", "text": "Hm, I don't know, I really thought it was a gig.", "expect": ["show_research"] },
-    { "speaker": "Elena", "text": "Either way, let's prototype both and see which feels better.", "expect": "quiet" }
+    { "speaker": "Elena", "text": "Either way, let's prototype both and see which feels better.", "expect": ["quiet", "add_notes"] }
   ]
 }

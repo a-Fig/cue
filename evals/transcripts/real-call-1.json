@@ -1,0 +1,15 @@
+{
+  "about": "Tyler's first real Google Meet call (2026-11-13, #4), from Recall's post-call transcript: one speaker, no punctuation, 'Cue' written 'q', 'Stripe' heard as 'stripes'. Split where the live stream plausibly broke it. Live, Sonnet 5.5 showed research twice, played and stopped the video, and never got to New York or Stripe.",
+  "lines": [
+    { "speaker": "Tyler", "text": "bro quiet intern is already in the meeting broke a lot to go to yeah wait but it is there" },
+    { "speaker": "Tyler", "text": "bro we've already figured this out already like understanding like yeah", "expect": "quiet" },
+    { "speaker": "Tyler", "text": "wait wait so q find me the population of japan", "expect": ["show_research"] },
+    { "speaker": "Tyler", "text": "finally the population of japan i need you to find the population of japan", "expect": ["quiet", "show_research"] },
+    { "speaker": "Tyler", "text": "i would really like to know the population of all of europe that would be so cool if someone could show me that", "expect": ["show_research"] },
+    { "speaker": "Tyler", "text": "i wonder what the population of europe is", "expect": ["quiet", "show_research"] },
+    { "speaker": "Tyler", "text": "what is the population of the greater new york area", "expect": ["show_research"] },
+    { "speaker": "Tyler", "text": "what is stripes like fee for processing transactions", "expect": ["show_research"] },
+    { "speaker": "Tyler", "text": "play a video by rick astley on youtube please", "expect": ["play_video"] },
+    { "speaker": "Tyler", "text": "pause it", "expect": ["stop_video"] }
+  ]
+}

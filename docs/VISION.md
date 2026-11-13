@@ -49,8 +49,12 @@ once, without waiting for the model.
 ## What it holds to
 
 - **It never speaks.** Pings and a video's own sound are the only audio.
-- **Doing nothing is usually right.** A wrong or needless visual costs the whole room's
-  attention. A missed chance costs nothing anyone notices.
+- **It acts unprompted, and holds back on chatter.** Cue is the intern running the meeting's
+  projector (Tyler, 2026-11-13, #10): when something comes up that the room would want to see (a
+  question wondered aloud, a guessed number, options with prices, a timeline said in words), it
+  puts it up without being asked. "Cue, …" is a direct line, not the main way in. A needless
+  visual still costs the whole room's attention, so reactions, jokes, status updates and
+  anything already on screen get nothing.
 - **Show the source.** Research is the page itself with the passage marked, not Cue's retelling.
 - **The room is in charge.** Anyone can quiet it or clear its screen, immediately.
 
