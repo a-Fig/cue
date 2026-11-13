@@ -1,0 +1,18 @@
+/* cue brand tokens, from the brand kit in Figma (2026-11-13).
+   Copy these into public/style.css when the screen is restyled. */
+:root {
+  --cue-blue: #3168b0;      /* cue's voice: status, links, diagram lines */
+  --cue-lime: #ddff8f;      /* the highlighter: research marks, captions. Never text on paper */
+  --cue-paper: #fefff4;     /* backgrounds for slides, research, docs */
+  --cue-paper-dim: #eef0e0; /* page behind paper cards */
+  --cue-ink: #242515;       /* text, and the idle/dark screen */
+  --cue-ink-muted: #6b6c5c; /* secondary text */
+  --cue-line: #e4e6d6;      /* borders on paper */
+
+  --cue-font-display: "Cal Sans", "Inter", system-ui, sans-serif; /* headlines, wordmark */
+  --cue-font-body: "Lato", system-ui, sans-serif;                 /* everything people read */
+  --cue-font-mono: "JetBrains Mono", ui-monospace, monospace;      /* URLs, timestamps */
+
+  --cue-radius-card: 28px;
+  --cue-radius-pill: 999px;
+}
