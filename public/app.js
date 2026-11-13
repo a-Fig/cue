@@ -138,6 +138,7 @@ async function maybeThink(force = false) {
 
   state.busy = true;
   state.pendingSince = 0;
+  const addressed = force || state.addressed; // skips the Jev reflex on the server (#50)
   state.addressed = false;
   state.lastThinkAt = now;
   setStatus("thinking…", "busy");
@@ -149,6 +150,7 @@ async function maybeThink(force = false) {
         transcript: state.transcript.map(({ speaker, text }) => ({ speaker, text })),
         screen: { ...state.screen, audioMuted: state.muted, screenHidden: state.hidden },
         recentActions: state.recentActions,
+        addressed,
       }),
     });
     const data = await r.json();

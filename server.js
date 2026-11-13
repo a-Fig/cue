@@ -51,9 +51,13 @@ const server = http.createServer(async (req, res) => {
         transcript: (body.transcript || []).slice(-80),
         screen: body.screen,
         recentActions: (body.recentActions || []).slice(-6),
+        addressed: body.addressed === true,
       });
       const u = result.usage;
-      console.log(`think ${Date.now() - started}ms $${u.usd.toFixed(4)} (in ${u.input + u.cacheRead + u.cacheWrite}, ` +
+      const g = result.gate;
+      console.log(`think ${Date.now() - started}ms $${u.usd.toFixed(4)}` +
+        (g ? ` [system 1 jev ${g.error ? "error" : g.act ? "act" : "quiet"} ${g.ms}ms]` : "") +
+        ` (in ${u.input + u.cacheRead + u.cacheWrite}, ` +
         `cached ${u.cacheRead}, out ${u.output}, searches ${u.searches}, fetches ${u.fetches}) ->`,
         result.actions.map((a) => a.tool).join(", ") || "quiet");
       return send(res, 200, result);

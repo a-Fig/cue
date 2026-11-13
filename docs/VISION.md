@@ -140,6 +140,12 @@ Proposed by Drew's agent from replay measurements; merging the PR that adds this
   unmeasured: Recall's transcript delay and the page fetch (about 1 s), which add to the call.
   Unprompted look-ups also wait 2.5 to 6.5 s for a pause before the call starts, so they meet
   10 s only at the quick end until the page checks for a pause more often than every 4 s.
+- **System 1 decides whether to act, System 2 decides what to show** (#50, 2026-11-13). Jev,
+  a System 1 decision model, reads the newest lines and answers "would showing something now
+  help?" Only when it isn't confident the answer is no does Claude get the tick. In the replay
+  (Sonnet 5.5 medium), Jev settled 10 of 22 quiet ticks by itself in ~230 ms at ~$0.00002, against
+  1.6 s and $0.0019 for Claude, and it got none of them wrong and blocked no tick that needed
+  action. Why a reflex: like the intern at the projector, most moments need no thought.
 
 ## What is still open
 

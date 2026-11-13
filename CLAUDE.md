@@ -61,6 +61,11 @@ Playwright renders any view without a Claude key (how PR screenshots get made).
   YouTube plays from Recall's cloud IP or asks it to sign in. Direct `.mp4` links are safer.
 - **Anyone who can open the page can spend the Claude key**, so the API checks `AGENT_TOKEN`.
   `/api/page` refuses internal addresses, but not DNS tricks.
+- **Two systems** (#50, 2026-11-13): System 1 is Jev (`typesafe/jev-1.13` on OpenRouter's
+  decisions API), which answers "act or stay quiet?" on each tick in ~0.2–0.9 s for ~$0.000015.
+  System 2 is Claude, which decides what to show, and runs only when Jev isn't sure the answer is
+  "quiet". It is on when `OPENROUTER_API_KEY` is set (`CUE_GATE=off` disables it). Being
+  addressed skips it, and any error fails open to Claude. The server log shows `[system 1 jev …]`.
 - The model is `claude-opus-5-5` at low effort (`CLAUDE_MODEL`, `CLAUDE_EFFORT`); every think
   call is billed. Sonnet 5.5 medium (2026-11-13 replay, #11): quiet tick ~$0.002 and 1.7 s,
   research ~$0.02 and 5.5 s, about $0.90 per projected hour; `evals/replay.mjs` prints both per kind of tick. Claude Code exports
