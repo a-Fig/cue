@@ -1,6 +1,7 @@
-// Recall's bot API, shared by send-bot.mjs and cue.mjs.
+// Recall's bot API, shared by send-bot.mjs, cue.mjs and panel.mjs.
 const { RECALL_API_KEY = "", RECALL_REGION = "us-west-2", AGENT_TOKEN = "", BOT_NAME = "Cue" } = process.env;
-const API = `https://${RECALL_REGION}.recall.ai/api/v1/bot`;
+// RECALL_API points the calls at a stand-in Recall, for trying the panel without billing.
+const API = process.env.RECALL_API || `https://${RECALL_REGION}.recall.ai/api/v1/bot`;
 
 async function call(method, path, body) {
   const r = await fetch(`${API}/${path}`, {

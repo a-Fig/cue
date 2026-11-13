@@ -1,7 +1,9 @@
-// The whole CI check, a few seconds long: every JS file parses, and the server
-// boots, serves the page and guards its API. It never calls Claude or Recall,
+// The whole CI check, a few seconds long: every JS file parses, the server
+// boots, serves the page and guards its API, and the local panel refuses
+// requests that don't come from its own page. It never calls Claude or Recall,
 // so it needs no keys.  Run it with `npm run check`.
 import { execFileSync, spawn } from "node:child_process";
+import http from "node:http";
 import { readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,6 +30,13 @@ const server = spawn(process.execPath, ["server.js"], {
   stdio: ["ignore", "ignore", "inherit"],
 });
 const base = `http://127.0.0.1:${PORT}`;
+const PANEL_PORT = String(Number(PORT) + 1);
+const panel = spawn(process.execPath, ["scripts/panel.mjs"], {
+  cwd: root,
+  env: { ...process.env, PANEL_PORT, PORT, RECALL_API_KEY: "unused", RECALL_API: "http://127.0.0.1:9/" },
+  stdio: ["ignore", "ignore", "inherit"],
+});
+const panelBase = `http://127.0.0.1:${PANEL_PORT}`;
 
 const checks = [
   ["page loads", "/?test=1", (r) => r.status === 200],
@@ -49,10 +58,31 @@ try {
     if (!pass) failed++;
     console.log(`${pass ? "ok  " : "FAIL"} ${name} (${r.status})`);
   }
+
+  for (let i = 0; ; i++) {
+    try { await fetch(panelBase); break; } catch { if (i > 50) throw new Error("panel did not start"); }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  // The panel can send bots, so only its own page may drive it. (Node's fetch can't set Host,
+  // so the DNS-rebinding guard is checked with http.get.)
+  const wrongHost = await new Promise((resolve, reject) =>
+    http.get(`${panelBase}/api/state`, { headers: { host: `evil.example:${PANEL_PORT}` } }, (r) => { r.resume(); resolve(r); }).on("error", reject));
+  const panelChecks = [
+    ["panel page loads", await fetch(panelBase + "/"), (r) => r.status === 200],
+    ["panel refuses a foreign Host", wrongHost, (r) => r.statusCode === 403],
+    ["panel refuses a POST without its header", await fetch(panelBase + "/api/send", { method: "POST", body: "{}" }), (r) => r.status === 403],
+    ["panel refuses a non-meeting link", await fetch(panelBase + "/api/send", { method: "POST", headers: { "x-cue-panel": "1" }, body: '{"meetingUrl":"nope"}' }), (r) => r.status === 400],
+  ];
+  for (const [name, r, ok] of panelChecks) {
+    const pass = ok(r);
+    if (!pass) failed++;
+    console.log(`${pass ? "ok  " : "FAIL"} ${name} (${r.status ?? r.statusCode})`);
+  }
 } catch (e) {
   console.error(e.message);
   failed++;
 } finally {
   server.kill();
+  panel.kill();
 }
 process.exitCode = failed ? 1 : 0; // not process.exit(): exiting mid-kill trips a libuv assert on Windows

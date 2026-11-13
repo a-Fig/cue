@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cue panel</title>
+  <link rel="stylesheet" href="panel.css">
+</head>
+<body>
+  <header class="top">
+    <span class="dot" id="dot"></span>
+    <strong>Cue</strong>
+    <span class="muted">· control panel</span>
+    <span class="spacer"></span>
+    <span class="conn" id="conn"></span>
+  </header>
+
+  <div class="problems" id="problems"></div>
+
+  <!-- Before a call, and between calls: one composer and nothing else. -->
+  <section class="hero" id="hero">
+    <h1 id="heroTitle">Put Cue in a call</h1>
+    <p class="lede">Paste the meeting link. Cue joins as “Cue”, shares its screen and never speaks.</p>
+    <form id="sendForm">
+      <input id="meetingUrl" type="url" placeholder="https://meet.google.com/abc-defg-hij" autocomplete="off" spellcheck="false" required>
+      <button id="sendBtn" type="submit">Send Cue in</button>
+    </form>
+    <p class="fine" id="fine"></p>
+  </section>
+
+  <main class="grid" id="live" hidden>
+    <section class="col">
+      <div class="card status" id="statusCard">
+        <p class="eyebrow" id="meetingLabel"></p>
+        <div class="headline">
+          <h1 id="phaseText"></h1>
+          <button class="danger" id="leaveBtn" type="button">Take Cue out</button>
+        </div>
+        <p class="detail" id="phaseDetail"></p>
+        <ol class="stepper" id="stepper"></ol>
+        <div class="meters" id="meters">
+          <div><span class="label">In for</span><span class="value" id="elapsed">0:00</span></div>
+          <div><span class="label" id="costLabel">Cost so far</span><span class="value" id="cost">$0.00</span></div>
+          <div><span class="label" id="leavesLabel">Leaves by itself</span><span class="value" id="leavesAt"></span></div>
+        </div>
+        <details class="log">
+          <summary>Details</summary>
+          <ol class="steps" id="steps"></ol>
+        </details>
+      </div>
+
+      <div class="card" id="screenCard">
+        <h3>On Cue's screen</h3>
+        <div class="screen" id="screen"></div>
+      </div>
+    </section>
+
+    <section class="col">
+      <div class="card feed-card">
+        <h3>What Cue hears and does</h3>
+        <ol class="feed" id="feed"></ol>
+        <p class="feed-end" id="feedEnd" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="panel.js"></script>
+</body>
+</html>
