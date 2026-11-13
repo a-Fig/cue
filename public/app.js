@@ -50,10 +50,32 @@ addEventListener("resize", fit);
 fit();
 
 // ---------- status ----------
+// The pill reads "cue · <word>": what Cue is doing (thinking, reconnecting) or else what it is
+// showing. It is ink over dark views and paper over sheets (#stage[data-tone]).
+const LABELS = { idle: "listening", research: "found it", compare: "comparison", visual: "drawing" };
+const viewLabel = () => (TEST && state.screen.mode === "idle" ? "test mode" : LABELS[state.screen.mode] || state.screen.mode);
 function setStatus(text, mode = "ok") {
-  $("statusText").textContent = text;
-  $("dot").className = "dot" + (mode === "busy" ? " busy" : mode === "off" ? " off" : "");
+  const el = $("statusText");
+  if (el.textContent !== text) {
+    el.textContent = text;
+    el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; // replay the fade-in
+  }
+  $("dot").className = "dot" + (mode === "off" ? " off" : "");
 }
+function setTone(name) {
+  const view = document.getElementById(`view-${name}`);
+  $("stage").dataset.tone = view?.classList.contains("sheet") ? "light" : "dark";
+}
+
+// Asked: someone said "cue, …". Over the idle screen the orb's ring turns and the request shows
+// under it, "cue," in lime, until the answer lands.
+function showAsked(text) {
+  const m = WAKE.exec(text || "");
+  const rest = m ? text.slice(m.index + m[0].length) : text;
+  $("requestText").replaceChildren(Object.assign(document.createElement("b"), { textContent: "cue, " }), rest || "");
+  $("stage").classList.add("asking");
+}
+const hideAsked = () => $("stage").classList.remove("asking");
 
 function log(...args) {
   console.log("[cue]", ...args);
@@ -112,7 +134,7 @@ function localCommand(text) {
 // transcription "data" object; parse defensively in case it's wrapped.
 function connectRecall() {
   const ws = new WebSocket("wss://meeting-data.bot.recall.ai/api/v1/transcript");
-  ws.onopen = () => { setStatus("listening"); log("transcript socket open"); };
+  ws.onopen = () => { setStatus(viewLabel()); log("transcript socket open"); };
   let rawLogged = 0;
   ws.onmessage = (ev) => {
     // The message shape is unverified (#4): log the first few raw, for Bot Explorer's console.
@@ -152,7 +174,12 @@ async function maybeThink(force = false) {
   const addressed = force || state.addressed; // skips the Jev reflex on the server (#50)
   state.addressed = false;
   state.lastThinkAt = now;
-  setStatus("thinking…", "busy");
+  // A look the Jev gate answers "quiet" is back in well under a second, so "thinking" shows only
+  // when Cue was asked, or when a look runs long enough to mean it is making something.
+  const asked = addressed && !force ? [...state.transcript].reverse().find((l) => WAKE.test(l.text)) : null;
+  if (addressed) setStatus("thinking");
+  if (asked && state.screen.mode === "idle") showAsked(asked.text);
+  const slow = setTimeout(() => setStatus("thinking"), 1200);
   try {
     const r = await fetch(`/api/think?token=${encodeURIComponent(TOKEN)}`, {
       method: "POST",
@@ -171,8 +198,10 @@ async function maybeThink(force = false) {
   } catch (err) {
     log("think failed:", err.message);
   } finally {
+    clearTimeout(slow);
+    hideAsked();
     state.busy = false;
-    setStatus("listening");
+    setStatus(viewLabel());
     if (state.addressed) maybeThink(); // spoken to while busy: answer now, not a tick later
   }
 }
@@ -189,11 +218,14 @@ function showView(name) {
   for (const el of document.querySelectorAll(".view")) {
     el.classList.toggle("active", el.id === `view-${name}`);
   }
+  if (name !== "idle") hideAsked();
+  setTone(name);
+  setStatus(state.busy ? "thinking" : LABELS[name] || name);
 }
 
 const viewApi = {
   token: TOKEN,
-  show: showView, remember, mode: () => state.screen.mode, screen: (s) => { state.screen = s; },
+  show: showView, remember, mode: () => state.screen.mode, screen: (s) => { state.screen = s; if (!state.busy) setStatus(viewLabel()); },
   heard: (re) => state.transcript.slice(-3).some((l) => re.test(l.text)), // in the last few lines
 };
 
@@ -257,25 +289,36 @@ function playVideo({ url, title, start_seconds = 0 }) {
     });
     v.addEventListener("loadedmetadata", () => { if (start) v.currentTime = start; }, { once: true });
     v.addEventListener("error", () => log("video failed to load:", url));
+    v.addEventListener("timeupdate", () => {
+      if (!v.duration) return;
+      $("videoTime").hidden = false;
+      $("videoTime").textContent = `${clock(v.currentTime)} / ${clock(v.duration)}`;
+    });
     v.play().catch((e) => log("video play blocked:", e.message));
     box.replaceChildren(v);
   }
   $("videoTitle").textContent = title;
   // Switch view without stopping the video we just started.
   for (const el of document.querySelectorAll(".view")) el.classList.toggle("active", el.id === "view-video");
+  hideAsked();
+  setTone("video");
   state.screen = { mode: "video", title, url };
+  if (!state.busy) setStatus(viewLabel());
   remember(`video: ${title}`);
 }
 
+const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
 function stopVideo(explicit = false) {
   const box = $("videoBox");
+  $("videoTime").hidden = true;
   if (!box.firstChild) return;
   box.querySelector("video")?.pause();
   box.replaceChildren(); // removing the iframe stops YouTube too
   ytFrame = null;
   if (explicit) {
-    showView("idle");
     state.screen = { mode: "idle" };
+    showView("idle");
     remember("stopped video");
   }
 }
@@ -408,11 +451,16 @@ let captionTimer;
 function showCaption(text) {
   const el = $("caption");
   const sentences = String(text || "").trim().split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2);
-  el.textContent = sentences.join(" ");
+  $("captionText").textContent = sentences.join(" ");
   el.classList.toggle("two", sentences.length > 1);
   el.classList.add("show");
+  hideAsked();
+  $("stage").classList.add("captioning");
   clearTimeout(captionTimer);
-  captionTimer = setTimeout(() => el.classList.remove("show"), CAPTION_MS);
+  captionTimer = setTimeout(() => {
+    el.classList.remove("show");
+    $("stage").classList.remove("captioning");
+  }, CAPTION_MS);
   remember(`caption: ${text}`);
 }
 
@@ -449,7 +497,7 @@ const DEMO = [
 
 function setupTest() {
   $("testpanel").hidden = false;
-  setStatus("test mode");
+  setStatus(viewLabel());
   const send = () => {
     addLine($("testSpeaker").value, $("testText").value);
     $("testText").value = "";
@@ -471,4 +519,5 @@ function setupTest() {
 }
 
 $("mutedBadge").hidden = !state.muted;
+setTone("idle");
 TEST ? setupTest() : connectRecall();

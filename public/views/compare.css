@@ -1,8 +1,10 @@
 /* Comparison table (views/compare.js). Sizes are for 1280x720 after a call app compresses it. */
-.compare h1 { margin: 0 0 22px; font-size: 40px; letter-spacing: -0.02em; }
+.compare { padding-top: 112px; }
+.compare h1 { margin: 0 0 22px; font: 400 52px/1.05 var(--cue-font-display); letter-spacing: -0.015em; }
 .compare table {
   width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0;
-  border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--panel);
+  border-radius: 22px; overflow: hidden; border: 1px solid var(--line); background: var(--panel);
+  box-shadow: 0 18px 40px rgba(36, 37, 21, 0.08);
 }
 .compare th, .compare td {
   padding: 14px 18px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top;
@@ -12,17 +14,17 @@
 .compare thead th { background: var(--panel-2); font-size: 24px; font-weight: 700; }
 .compare th.corner { width: 220px; }
 .compare tbody th { color: var(--muted); font-weight: 600; font-size: 19px; text-transform: uppercase; letter-spacing: 0.04em; }
-.compare .pick { background: #15301f; }
-.compare thead .pick { background: #1c4029; color: #b9f5cf; }
-.compare tbody tr { animation: compare-rise 0.5s ease both; }
+.compare .pick { background: rgba(221, 255, 143, 0.35); }
+.compare thead .pick { background: var(--cue-lime); color: var(--cue-ink); }
+.compare tbody tr { animation: compare-rise 0.55s var(--ease) both; }
 @keyframes compare-rise { from { opacity: 0; transform: translateY(6px); } }
 .compare .badge {
   margin-left: 10px; padding: 2px 9px; border-radius: 999px; vertical-align: 3px;
-  background: var(--ok); color: #06210f; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
+  background: var(--cue-ink); color: var(--cue-lime); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
 }
 .compare .why { margin: 16px 0 0; color: var(--muted); font-size: 20px; }
 .compare .why:empty { display: none; }
-.compare .why::before { content: "Why: "; color: var(--ok); font-weight: 700; }
+.compare .why::before { content: "Why: "; color: var(--accent); font-weight: 700; }
 /* Five or six rows, or four options: tighter so the table still fits above the caption */
 .compare.dense th, .compare.dense td { padding: 10px 16px; font-size: 19px; }
 .compare.dense thead th { font-size: 21px; }

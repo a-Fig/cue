@@ -1,6 +1,6 @@
 /* Drawn visuals (views/visual.js) on the paper sheet. The frame is the drawing's whole canvas:
    an SVG with viewBox "0 0 1136 470" fills it exactly, and other shapes scale to fit. */
-.visual { padding: 84px 72px 100px; display: flex; flex-direction: column; }
+.visual { padding: 108px 72px 100px; display: flex; flex-direction: column; }
 /* One line, so the frame stays 470 tall and the drawing's 22px text stays 22px. */
 .visual h1 {
   margin: 0 0 16px; font: 400 48px/1.08 var(--cue-font-display); letter-spacing: -0.01em;

@@ -1,51 +1,54 @@
-/* Cue's screen. Same system as the control panel (#60), which follows Murmur's web UI: a black
-   stage while Cue listens, content (slides, research, diagrams) on a white sheet, Inter, hairline
-   borders, one indigo accent, and a soft yellow highlighter for passages. The --cue-* names are
-   kept from the brand kit (#43) because the views use them; their values changed (2026-11-13,
-   Tyler: the brand colours had to go). The screen is seen shrunk into a Meet tile (~320×180 in
-   gallery view), so nothing a person reads is under 24px. */
+/* Cue's screen, in Cara's brand kit (brand/tokens.css, brand/README.md): an ink stage while Cue
+   listens, with the mark in two breathing rings; paper sheets for what it shows (slides, research,
+   diagrams, notes); lime for Cue's own voice (captions, highlights, the thinking ring); blue for
+   lines and figures on paper. Cal Sans for titles, Lato for everything people read. The screen is
+   seen shrunk into a Meet tile (~320×180 in gallery view), so text people read stays 24px or more
+   where it can. Recall streams the page at 15 fps, so motion is slow and large: breathing rings, a
+   turning ring, a waveform, cards that rise. */
 :root {
-  --cue-blue: #4f46e5;      /* indigo: Cue's voice on paper */
-  --cue-lime: #fde68a;      /* the highlighter, behind ink text */
-  --cue-paper: #ffffff;
-  --cue-paper-dim: #f4f4f5;
-  --cue-ink: #09090b;
-  --cue-ink-muted: #71717a;
-  --cue-line: #e4e4e7;
-  --cue-font-display: "Inter", system-ui, sans-serif;
-  --cue-font-body: "Inter", system-ui, sans-serif;
+  --cue-blue: #3168b0;      /* cue's voice on paper: figures, links, diagram lines */
+  --cue-lime: #ddff8f;      /* the highlighter and cue's voice on ink. Never text on paper */
+  --cue-paper: #fefff4;     /* cards on sheets */
+  --cue-paper-dim: #eef0e0; /* the sheet behind the cards */
+  --cue-ink: #242515;       /* text, and the idle/dark stage */
+  --cue-ink-muted: #6b6c5c; /* secondary text on paper */
+  --cue-line: #e4e6d6;      /* borders on paper */
+  --cue-olive: #66733f;     /* the resting ring, the dimmed mark */
+  --cue-font-display: "Cal Sans", "Lato", system-ui, sans-serif;
+  --cue-font-body: "Lato", system-ui, sans-serif;
   --cue-font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --cue-radius-card: 20px;
+  --cue-radius-card: 28px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* The names the views use. On ink by default; .sheet redefines them for paper. Indigo is
-     too dark to read on ink, so there the accent is a lighter indigo. */
+  /* The names the views use. On ink by default; .sheet redefines them for paper. */
   --bg: var(--cue-ink);
-  --panel: #18181b;
-  --panel-2: #27272a;
-  --line: rgba(255, 255, 255, 0.1);
-  --text: #fafafa;
-  --text-2: #d4d4d8;
-  --muted: #a1a1aa;
-  --accent: #a5b4fc;
+  --panel: #2e2f1e;
+  --panel-2: #383a27;
+  --line: rgba(254, 255, 244, 0.14);
+  --text: var(--cue-paper);
+  --text-2: #dfe0cf;
+  --muted: #a3a48f;
+  --accent: var(--cue-lime);
   --mark: var(--cue-lime);
   --mark-text: var(--cue-ink);
-  --ok: #34d399;
-  --busy: #fbbf24;
-  --bad: #f87171;
-  --live: #10b981;
+  --ok: var(--cue-lime);
+  --busy: #f2c66d;
+  --bad: #f08a6c;
+  --live: var(--cue-lime);
   --font: var(--cue-font-body);
 }
 
-/* A paper sheet: slides, research, diagrams. Views from public/views/ can add `sheet` too. */
+/* A paper sheet: slides, research, diagrams, notes. Views from public/views/ add `sheet` too. */
 .sheet {
-  --bg: var(--cue-paper);
-  --panel: #ffffff;
-  --panel-2: var(--cue-paper-dim);
+  --bg: var(--cue-paper-dim);
+  --panel: var(--cue-paper);
+  --panel-2: #f5f6e8;
   --line: var(--cue-line);
   --text: var(--cue-ink);
-  --text-2: #3f3f46;
+  --text-2: #3d3e2c;
   --muted: var(--cue-ink-muted);
   --accent: var(--cue-blue);
+  --ok: #4f7a22;
   background: var(--bg);
   color: var(--text);
 }
@@ -68,95 +71,173 @@ html, body {
   width: 1280px;
   height: 720px;
   transform: translate(-50%, -50%) scale(var(--scale, 1));
-  background: var(--bg);
+  background: var(--cue-ink);
   overflow: hidden;
 }
 
-/* Status pill: the mark, a state dot, what Cue is doing. Always ink, so it reads on paper too. */
+/* The mark, in whatever colour its parent sets: the logo file is only its shape. */
+.mark {
+  display: block;
+  background: currentColor;
+  -webkit-mask: url(logo-mark.svg) center / contain no-repeat;
+  mask: url(logo-mark.svg) center / contain no-repeat;
+  aspect-ratio: 144 / 142;
+}
+
+/* ---------- status pill: "cue · listening" ---------- */
 .status {
   position: absolute;
-  top: 20px;
-  left: 24px;
+  top: 28px;
+  left: 32px;
   z-index: 5;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 20px 8px 14px;
+  gap: 8px;
+  height: 50px;
+  padding: 0 22px 0 16px;
   border-radius: 999px;
-  background: rgba(9, 9, 11, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  font-size: 22px;
-  font-weight: 500;
-  color: #d4d4d8;
+  background: rgba(254, 255, 244, 0.08);
+  border: 1.5px solid rgba(254, 255, 244, 0.22);
+  font: 400 21px/1 var(--cue-font-body);
+  color: var(--cue-paper);
+  transition: background 0.5s ease, border-color 0.5s ease, color 0.5s ease;
 }
-.status .mark { height: 26px; width: auto; display: block; filter: grayscale(1) brightness(3); }
-.status .sep { display: none; }
-/* The name is the mark; the text stays for screen readers and Bot Explorer. */
-.status #botName { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--live); }
-.dot.busy { background: var(--busy); animation: blink 0.9s infinite alternate; }
-.dot.off { background: var(--bad); }
+.status .mark { width: 22px; margin-right: 14px; color: var(--cue-lime); transition: color 0.5s ease; }
+#botName { text-transform: lowercase; }
+#statusText { display: inline-block; animation: status-in 0.4s var(--ease); }
+@keyframes status-in { from { opacity: 0; transform: translateY(4px); } }
+#stage[data-tone="light"] .status {
+  background: rgba(36, 37, 21, 0.05);
+  border-color: rgba(36, 37, 21, 0.16);
+  color: var(--cue-ink);
+}
+#stage[data-tone="light"] .status .mark { color: var(--cue-blue); }
+/* The dot shows only when something is wrong (the transcript socket dropped). */
+.dot { display: none; width: 10px; height: 10px; margin-left: 6px; border-radius: 50%; background: var(--bad); }
+.dot.off { display: block; animation: blink 0.9s infinite alternate; }
 @keyframes blink { to { opacity: 0.3; } }
 
-/* Views */
+.muted-badge {
+  position: absolute; top: 32px; right: 32px; z-index: 5;
+  padding: 9px 20px; border-radius: 999px;
+  background: var(--cue-lime); color: var(--cue-ink);
+  font: 700 22px/1.2 var(--cue-font-body);
+  animation: pop-in 0.45s var(--ease);
+}
+.muted-badge[hidden] { display: none; }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.85); } }
+
+/* ---------- views ---------- */
 .view {
   position: absolute;
   inset: 0;
-  padding: 96px 72px 120px;
+  padding: 120px 64px 112px;
+  background: var(--bg);
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.45s ease, transform 0.45s ease;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.6s var(--ease);
   pointer-events: none;
 }
 .view.active { opacity: 1; transform: none; pointer-events: auto; }
 
-/* Idle: the lockup on ink, and a quiet line saying it's listening. */
-.idle { display: grid; place-items: center; }
-.idle-mark { display: grid; justify-items: center; gap: 28px; text-align: center; }
-.idle-mark .logo { width: 260px; height: auto; display: block; filter: grayscale(1) brightness(3); }
-.idle-mark p { margin: 0; }
-.idle-mark .listening {
-  display: flex; align-items: center; gap: 12px;
-  font-size: 28px; color: var(--text-2);
-}
-.idle-mark .listening::before {
-  content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--live);
-  animation: breathe 3s ease-in-out infinite;
-}
-.idle-mark .hint { font-size: 24px; color: var(--muted); }
-@keyframes breathe { 50% { opacity: 0.25; } }
-/* The notice that an AI is listening (#15): a quiet card under the hint, on ink. */
-.notice {
-  max-width: 680px; padding: 16px 24px;
-  border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
-  text-align: left; font-size: 19px; line-height: 1.45; color: var(--muted);
-}
-.notice .notice-title { margin-bottom: 4px; color: var(--text); font-size: 21px; font-weight: 700; }
-.ticker {
-  position: absolute; left: 72px; right: 72px; bottom: 56px;
-  margin: 0; text-align: center; color: var(--muted); font-size: 24px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+/* ---------- idle: the orb, "Listening.", and the last thing said ---------- */
+.idle { padding: 0; }
+.orb { position: absolute; left: 470px; top: 120px; width: 340px; height: 340px; }
+.orb svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.orb circle { fill: none; transform-origin: 170px 170px; transition: stroke 0.6s ease, opacity 0.6s ease; }
+.ring-outer { stroke: rgba(254, 255, 244, 0.1); stroke-width: 1.5; animation: ring-breathe 5s ease-in-out infinite; }
+.ring-inner { stroke: var(--cue-olive); stroke-width: 2.5; animation: ring-breathe 5s ease-in-out -2.5s infinite; }
+@keyframes ring-breathe { 50% { transform: scale(1.035); opacity: 0.55; } }
+.orb .mark {
+  position: absolute; left: 50%; top: 50%; width: 66px;
+  transform: translate(-50%, -50%);
+  color: var(--cue-lime);
+  transition: color 0.6s ease, transform 0.6s var(--ease);
 }
 
-/* Research: the answer, sized for the back of the room (Google's answer box, keynote
-   slides), and one excerpt from the page as evidence (Perplexity's sources, a featured
-   snippet). */
+.idle-text, .asked { position: absolute; left: 0; right: 0; text-align: center; }
+.idle p { margin: 0; }
+.idle-text { top: 498px; transition: opacity 0.4s ease, transform 0.5s var(--ease); }
+.idle-text .listening { font: 400 48px/1.15 var(--cue-font-display); color: var(--cue-paper); letter-spacing: -0.01em; }
+.idle-text .hint { margin-top: 18px; font-size: 25px; color: var(--muted); }
+
+/* Asked: someone said "cue, …" and it is working on it. */
+.asked { top: 500px; opacity: 0; transform: translateY(12px); transition: opacity 0.4s ease, transform 0.5s var(--ease); }
+.asked .request {
+  display: inline-flex; align-items: center; gap: 22px; max-width: 1100px;
+  font-size: 30px; color: var(--cue-paper);
+}
+#requestText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#requestText b { color: var(--cue-lime); font-weight: 700; }
+.asked .working { margin-top: 26px; font-size: 26px; color: var(--muted); animation: fade-pulse 2.4s ease-in-out infinite; }
+@keyframes fade-pulse { 50% { opacity: 0.45; } }
+.wave { display: inline-flex; align-items: center; gap: 6px; height: 62px; flex: none; }
+.wave i { width: 6px; height: 100%; border-radius: 3px; background: var(--cue-lime); transform: scaleY(0.3); }
+.asking .wave i { animation: wave 1.1s ease-in-out infinite; }
+.wave i:nth-child(1) { animation-delay: -0.9s; } .wave i:nth-child(2) { animation-delay: -0.3s; }
+.wave i:nth-child(3) { animation-delay: -0.6s; } .wave i:nth-child(4) { animation-delay: -0.1s; }
+.wave i:nth-child(5) { animation-delay: -0.75s; } .wave i:nth-child(6) { animation-delay: -0.45s; }
+.wave i:nth-child(7) { animation-delay: -0.2s; } .wave i:nth-child(8) { animation-delay: -0.85s; }
+.wave i:nth-child(9) { animation-delay: -0.5s; } .wave i:nth-child(10) { animation-delay: -0.05s; }
+.wave i:nth-child(11) { animation-delay: -0.65s; } .wave i:nth-child(12) { animation-delay: -0.35s; }
+@keyframes wave { 50% { transform: scaleY(1); } }
+
+#stage.asking .idle-text { opacity: 0; transform: translateY(-10px); }
+#stage.asking .asked { opacity: 1; transform: none; }
+#stage.asking .ticker, #stage.asking .notice { opacity: 0; } /* the request is already on screen */
+#stage.asking .ring-inner {
+  stroke: var(--cue-lime); stroke-opacity: 0.75; stroke-width: 3; stroke-dasharray: 12 14; stroke-linecap: round;
+  animation: ring-turn 9s linear infinite;
+}
+@keyframes ring-turn { to { transform: rotate(360deg); } }
+
+/* A caption over the idle screen: the orb steps back so the caption is the thing to read. */
+#stage.captioning .idle-text, #stage.captioning .notice, #stage.captioning .ticker { opacity: 0; }
+#stage.captioning .orb .mark { color: var(--cue-olive); }
+
+.notice, .ticker {
+  position: absolute; left: 72px; right: 72px; bottom: 34px; margin: 0;
+  text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: opacity 0.4s ease;
+}
+.ticker { font-size: 24px; color: #75766a; }
+.notice { font-size: 20px; color: #75766a; }
+.ticker:not(:empty) ~ .notice, .notice:has(~ .ticker:not(:empty)) { opacity: 0; }
+
+/* ---------- caption: Cue's voice, a lime card ---------- */
+.caption {
+  position: absolute; left: 50%; bottom: 56px; z-index: 6;
+  display: flex; align-items: center; gap: 26px;
+  max-width: 1080px; padding: 22px 36px 22px 28px;
+  transform: translate(-50%, 24px) scale(0.97);
+  border-radius: 28px;
+  background: var(--cue-lime); color: var(--cue-ink);
+  box-shadow: 0 18px 40px rgba(20, 21, 10, 0.28);
+  font: 700 31px/1.25 var(--cue-font-body);
+  opacity: 0; transition: opacity 0.35s ease, transform 0.55s var(--ease);
+}
+.caption .mark { width: 26px; flex: none; color: var(--cue-ink); }
+#captionText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.caption.two #captionText { white-space: normal; }
+.caption.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- research: the answer, then one excerpt from the page as evidence ---------- */
 .research {
   display: grid; grid-template-columns: 1fr 520px; gap: 56px; align-items: center;
-  padding: 84px 72px 136px; /* the bottom stays clear for the caption bar */
+  padding: 104px 72px 120px;
 }
-/* No verified quote (the site blocked us, or the quotes were not on the page): the answer
-   alone, bigger, so the screen looks meant rather than half-empty. */
 .research.no-excerpt { grid-template-columns: 1fr; padding-left: 96px; }
 .research.no-excerpt .excerpt { display: none; }
 .research.no-excerpt .headline { font-size: 132px; }
 .research.no-excerpt .headline.long { font-size: 84px; }
 .research.no-excerpt .context { max-width: 36ch; font-size: 34px; }
 .answer { min-width: 0; }
-.kicker { margin: 0 0 14px; color: var(--accent); font-size: 28px; font-weight: 700; }
+.answer > * { animation: rise 0.6s var(--ease) both; }
+.answer > :nth-child(2) { animation-delay: 80ms; } .answer > :nth-child(3) { animation-delay: 160ms; } .answer > :nth-child(4) { animation-delay: 240ms; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+.kicker { margin: 0 0 14px; color: var(--accent); font: 700 28px/1.2 var(--cue-font-body); }
 .headline {
-  margin: 0 0 22px; font: 650 104px/1.0 var(--cue-font-display); letter-spacing: -0.02em;
+  margin: 0 0 22px; font: 400 104px/1.0 var(--cue-font-display); letter-spacing: -0.01em;
   color: var(--accent); overflow-wrap: anywhere;
 }
 .headline.long { font-size: 68px; line-height: 1.06; }
@@ -167,7 +248,7 @@ html, body {
 .source-chip {
   display: inline-flex; align-items: center; gap: 12px; margin: 0;
   padding: 10px 20px 10px 12px; border-radius: 999px;
-  background: var(--panel-2); border: 1px solid var(--line);
+  background: var(--panel); border: 1px solid var(--line);
   font: 22px/1.2 var(--cue-font-mono); color: var(--text-2);
 }
 .source-chip img { width: 28px; height: 28px; border-radius: 6px; background: #fff; }
@@ -177,7 +258,8 @@ html, body {
   margin: 0; padding: 30px 36px 24px; max-height: 100%; overflow: hidden;
   border-radius: var(--cue-radius-card);
   background: var(--panel); border: 1px solid var(--line); color: var(--text);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 18px 40px rgba(36, 37, 21, 0.08);
+  animation: rise 0.7s var(--ease) 0.15s both;
   transition: opacity 0.35s ease;
 }
 .excerpt.loading blockquote { color: var(--muted); font-style: italic; }
@@ -192,59 +274,50 @@ html, body {
 .excerpt mark {
   background: var(--mark); color: var(--mark-text); padding: 0 4px; border-radius: 4px;
   box-decoration-break: clone; -webkit-box-decoration-break: clone;
-  animation: markin 0.9s ease-out both;
+  animation: markin 1.1s ease-out 0.3s both;
 }
 @keyframes markin { from { background: transparent; } }
 .dots { display: flex; gap: 8px; margin: 18px 0 0; min-height: 10px; }
 .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
 .dots i.on { background: var(--accent); }
 
-/* Video: on ink, so the picture is the brightest thing. */
-.video { padding-top: 84px; }
-.video h1 { margin: 0 0 18px; font: 650 36px/1.1 var(--cue-font-display); }
+/* ---------- video: on ink, so the picture is the brightest thing ---------- */
+.video { padding: 104px 96px 0; }
 .video-box {
-  height: 520px; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid var(--line);
+  height: 520px; border-radius: 32px; overflow: hidden;
+  background: linear-gradient(135deg, #3168b0, #1b1c10 75%);
+  animation: rise 0.7s var(--ease) both;
 }
+.video-box:has(video, iframe) { background: #14150b; } /* the gradient is only the placeholder */
 .video-box video, .video-box iframe { width: 100%; height: 100%; border: 0; display: block; }
-
-/* Muted badge and screen cover */
-.muted-badge {
-  padding: 2px 10px; border-radius: 999px;
-  background: #4a2a22; color: #ffc2b5; font-size: 18px; font-weight: 700;
+.video-foot { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 22px; }
+.video h1 {
+  margin: 0; min-width: 0; font: 400 38px/1.1 var(--cue-font-display); color: var(--cue-paper);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.muted-badge[hidden] { display: none; }
+.video-time {
+  flex: none; padding: 9px 14px; border-radius: 10px;
+  background: rgba(254, 255, 244, 0.08); color: var(--cue-lime);
+  font: 22px/1.2 var(--cue-font-mono);
+}
+.video-time[hidden] { display: none; }
+
+/* ---------- screen paused ---------- */
 .cover {
   position: absolute; inset: 0; z-index: 4;
-  display: grid; place-content: center; text-align: center;
-  background: var(--cue-ink); color: var(--text-2); font-size: 32px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--cue-ink); text-align: center;
+  animation: fade-in 0.5s ease;
 }
+@keyframes fade-in { from { opacity: 0; } }
 .cover[hidden] { display: none; }
-.cover p { margin: 0 0 10px; }
-.cover .hint { font-size: 24px; color: var(--muted); }
+.cover .mark { width: 82px; margin-bottom: 92px; color: #4d4f3c; }
+.cover p { margin: 0; }
+.cover-title { font: 400 64px/1.1 var(--cue-font-display); color: var(--cue-paper); letter-spacing: -0.01em; }
+.cover .hint { margin-top: 16px; font-size: 26px; color: var(--muted); }
+#stage:has(.cover:not([hidden])) .status { opacity: 0; }
 
-/* Caption: Cue is shy, so a caption is a small note, not a banner. A dark card low on the
-   screen, like a call app's own captions, so it reads on the black stage and on white sheets
-   alike; Cue's dot says who it's from. One line, gone in 7 s. */
-.caption {
-  position: absolute; left: 50%; bottom: 32px; z-index: 6;
-  max-width: 1000px; padding: 14px 28px 14px 24px;
-  transform: translate(-50%, 12px);
-  border-radius: 18px;
-  background: #18181b; color: #fafafa;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-  font-size: 28px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.caption::before {
-  content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 16px;
-  border-radius: 50%; background: #818cf8; vertical-align: 3px;
-}
-.caption.two { white-space: normal; }
-.caption.show { opacity: 1; transform: translate(-50%, 0); }
-
-/* Test panel (outside the stage, only for local testing) */
+/* ---------- test panel (outside the stage, only for local testing) ---------- */
 .testpanel {
   position: fixed; right: 12px; bottom: 12px; z-index: 10; width: 340px;
   display: flex; flex-direction: column; gap: 6px;

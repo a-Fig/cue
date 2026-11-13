@@ -19,6 +19,7 @@ export async function showComparison(input, view) {
   const pickIdx = options.findIndex((o) => input.pick && o.toLowerCase() === clip(input.pick, 28).toLowerCase());
 
   el.querySelector("h1").textContent = title;
+  el.classList.add("sheet");
   el.classList.toggle("dense", rows.length > 4 || options.length > 3);
 
   const head = el.querySelector("thead tr");
