@@ -302,6 +302,14 @@ html, body {
 }
 .video-time[hidden] { display: none; }
 
+/* While a video plays (#24). The bot's browser streams the page from a small cloud machine, and
+   anything else that moves competes with the video for its CPU, so: the other views (the idle
+   orb's breathing rings, above all) leave rendering instead of animating at opacity 0, nothing
+   on the stage animates, and the caption that can sit over the video drops its blurred shadow. */
+#stage.playing .view:not(#view-video) { display: none; }
+#stage.playing, #stage.playing * { animation: none !important; }
+#stage.playing .caption { box-shadow: none; }
+
 /* ---------- screen paused ---------- */
 .cover {
   position: absolute; inset: 0; z-index: 4;

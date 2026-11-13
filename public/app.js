@@ -277,7 +277,7 @@ function playVideo({ url, title, start_seconds = 0 }) {
     const src = new URL(`https://www.youtube.com/embed/${encodeURIComponent(id)}`);
     src.search = new URLSearchParams({
       autoplay: "1", start: String(start), enablejsapi: "1", rel: "0", playsinline: "1", controls: "0", iv_load_policy: "3",
-      mute: state.muted ? "1" : "0", origin: location.origin,
+      disablekb: "1", fs: "0", cc_load_policy: "0", mute: state.muted ? "1" : "0", origin: location.origin,
     });
     ytFrame = Object.assign(document.createElement("iframe"), {
       src: src.toString(), allow: "autoplay; encrypted-media", title,
@@ -289,15 +289,21 @@ function playVideo({ url, title, start_seconds = 0 }) {
     });
     v.addEventListener("loadedmetadata", () => { if (start) v.currentTime = start; }, { once: true });
     v.addEventListener("error", () => log("video failed to load:", url));
+    // timeupdate fires about 4 times a second; repaint the clock only when its text changes.
     v.addEventListener("timeupdate", () => {
       if (!v.duration) return;
+      const text = `${clock(v.currentTime)} / ${clock(v.duration)}`;
+      if ($("videoTime").textContent === text) return;
       $("videoTime").hidden = false;
-      $("videoTime").textContent = `${clock(v.currentTime)} / ${clock(v.duration)}`;
+      $("videoTime").textContent = text;
     });
     v.play().catch((e) => log("video play blocked:", e.message));
     box.replaceChildren(v);
   }
   $("videoTitle").textContent = title;
+  // The bot's browser has little CPU to spare (#24): .playing stops every other animation on
+  // the stage and takes the hidden views out of rendering while the video plays (style.css).
+  $("stage").classList.add("playing");
   // Switch view without stopping the video we just started.
   for (const el of document.querySelectorAll(".view")) el.classList.toggle("active", el.id === "view-video");
   hideAsked();
@@ -316,6 +322,7 @@ function stopVideo(explicit = false) {
   box.querySelector("video")?.pause();
   box.replaceChildren(); // removing the iframe stops YouTube too
   ytFrame = null;
+  $("stage").classList.remove("playing");
   if (explicit) {
     state.screen = { mode: "idle" };
     showView("idle");

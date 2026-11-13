@@ -1,5 +1,11 @@
 // Recall's bot API, shared by send-bot.mjs, cue.mjs and panel.mjs.
 const { RECALL_API_KEY = "", RECALL_REGION = "us-west-2", AGENT_TOKEN = "", BOT_NAME = "Cue" } = process.env;
+// The bot's machine (#24). Recall's default "web" bot gets 250 millicores and 750 MB, too little
+// to play video smoothly in the page it streams; Recall recommends web_4_core (2250 millicores,
+// 5250 MB) for output media. It costs $0.10/h more on monthly plans, $0.60/h instead of $0.50/h
+// pay-as-you-go (Recall docs, 2026-11-13). BOT_VARIANT=web goes back to the small machine;
+// web_gpu ($1.50/h) is the next size up.
+const BOT_VARIANT = process.env.BOT_VARIANT || "web_4_core";
 // RECALL_API points the calls at a stand-in Recall, for trying the panel without billing.
 const API = process.env.RECALL_API || `https://${RECALL_REGION}.recall.ai/api/v1/bot`;
 
@@ -48,6 +54,7 @@ export function createBot(meetingUrl, publicUrl) {
       // nothing, but then a call's transcript can't be downloaded afterwards for evals/.
       retention: { type: "timed", hours: 24 },
     },
+    variant: { google_meet: BOT_VARIANT, zoom: BOT_VARIANT, microsoft_teams: BOT_VARIANT },
     chat: { on_bot_join: { send_to: "everyone", message: JOIN_NOTICE, pin: true } },
   });
 }
