@@ -135,7 +135,7 @@ There's no build step and no framework: a plain Node `http` server, plain ES mod
 Most of a meeting needs nothing on screen, so most of Cue's decisions are "stay quiet".
 Asking a large model that question every few seconds is slow and wasteful, so Cue splits the work:
 
-- **System 1, Jev** (TypeSafe's decision model `typesafe/jev-1.13`, through OpenRouter's [decisions API](https://openrouter.ai/api/alpha/decisions)), answers one question on every transcript tick: would putting something on the shared screen right now help?
+- **System 1, Jev** (TypeSafe's decision model `typesafe/jev-1.13`, called through OpenRouter's decisions API, `/api/alpha/decisions`) answers one question on every transcript tick: would putting something on the shared screen right now help?
 - **System 2, Claude**, runs only when Jev doesn't say a confident no. It decides what to show, and researches or draws it.
 
 ```
