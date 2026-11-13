@@ -1,0 +1,17 @@
+{
+  "about": "A routine standup: status updates and small talk, nothing to look up or draw. Cue should stay quiet throughout.",
+  "lines": [
+    { "speaker": "Maya", "text": "Morning all. How was everyone's weekend?" },
+    { "speaker": "Leo", "text": "Good, went hiking up near the lake, my legs are destroyed." },
+    { "speaker": "Priya", "text": "Ha, nice. I mostly slept.", "expect": "quiet" },
+    { "speaker": "Maya", "text": "Okay, let's go around. Leo, you first." },
+    { "speaker": "Leo", "text": "I finished the login page refactor, it's in review. Today I'm picking up the settings bug." },
+    { "speaker": "Priya", "text": "I'm still on the export job. The queue is backed up again so it's slow to test.", "expect": "quiet" },
+    { "speaker": "Maya", "text": "Do you need anything from me for that?" },
+    { "speaker": "Priya", "text": "No, I think I'm fine, I'll ping you if it gets worse.", "expect": "quiet" },
+    { "speaker": "Maya", "text": "Cool. Who knows what next sprint looks like, honestly, but let's get through this one." },
+    { "speaker": "Leo", "text": "Yeah. Q and A session with design is Thursday, right?" },
+    { "speaker": "Maya", "text": "Thursday at two, yes.", "expect": "quiet" },
+    { "speaker": "Maya", "text": "Alright, that's it, thanks everyone.", "expect": "quiet" }
+  ]
+}
