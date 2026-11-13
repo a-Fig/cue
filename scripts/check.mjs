@@ -46,7 +46,7 @@ const checks = [
   ["no path traversal", "/..%2Fserver.js", (r) => r.status === 403 || r.status === 404],
 ];
 
-let failed = 0;
+let failed = (await import("./sanitize-check.mjs")).default;
 try {
   for (let i = 0; ; i++) {
     try { await fetch(base); break; } catch { if (i > 50) throw new Error("server did not start"); }

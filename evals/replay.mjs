@@ -66,6 +66,7 @@ function applyToState(st, { tool, input }) {
       st.screen = { mode: "comparison", title: input.title, options: input.options, criteria: input.rows.map((r) => r.criterion), pick: input.pick };
       return remember(`comparison: ${input.title}`);
     case "show_research": st.screen = { mode: "research", title: input.title, url: input.url }; return remember(`research: ${input.title}`);
+    case "show_visual": st.screen = { mode: "visual", title: input.title }; return remember(`visual: ${input.title}`);
     case "play_video": st.screen = { mode: "video", title: input.title, url: input.url }; return remember(`video: ${input.title}`);
     case "stop_video": st.screen = { mode: "idle" }; return remember("stopped video");
     case "caption": return remember(`caption: ${input.text}`);
