@@ -21,13 +21,13 @@
 }
 .notes .owner {
   display: inline-block; margin-right: 8px; padding: 1px 9px; border-radius: 6px;
-  background: #1f3347; color: var(--accent); font-size: 16px; font-weight: 700; vertical-align: 2px;
+  background: rgba(165, 180, 252, 0.15); color: var(--accent); font-size: 16px; font-weight: 700; vertical-align: 2px;
 }
 /* What this update added: one slow glow, readable at 15 fps */
 .notes li.fresh { animation: notes-fresh 6s ease-out both; }
 @keyframes notes-fresh {
-  0% { background: #3a3317; box-shadow: inset 4px 0 0 var(--mark); }
-  70% { background: #3a3317; box-shadow: inset 4px 0 0 var(--mark); }
+  0% { background: rgba(253, 230, 138, 0.12); box-shadow: inset 4px 0 0 var(--mark); }
+  70% { background: rgba(253, 230, 138, 0.12); box-shadow: inset 4px 0 0 var(--mark); }
   100% { background: var(--panel-2); box-shadow: inset 4px 0 0 transparent; }
 }
 .notes .earlier { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
