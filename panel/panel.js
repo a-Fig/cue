@@ -84,8 +84,13 @@ function renderFeed(items) {
 function renderScreen(s) {
   const box = $("screen");
   box.replaceChildren();
-  if (!s || !s.mode || s.mode === "idle") {
-    box.append(el("div", "idle", "Listening quietly"));
+  const listening = !s || !s.mode || s.mode === "idle";
+  box.classList.toggle("listening", listening);
+  if (listening) {
+    const mark = el("img");
+    mark.src = "logo/logo-mark.svg";
+    mark.alt = "";
+    box.append(mark, el("p", "", "Listening quietly"));
   } else {
     box.append(el("p", "mode", s.mode));
     if (s.title) box.append(el("p", "title", s.title));

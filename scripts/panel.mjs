@@ -24,6 +24,7 @@ const PORT = Number(process.env.PORT || 3000);
 const MAX_MINUTES = Number(process.env.CUE_MAX_MINUTES || 60);
 const DOLLARS_PER_HOUR = 0.65; // Recall's rate, 2026-11-13; billed from joining until leaving
 const PANEL_DIR = path.join(root, "panel");
+const LOGOS = new Set(["logo.svg", "logo-light-bg.svg", "logo-mark.svg"]); // the brand kit's copies in public/
 
 // ---------- state the page polls ----------
 
@@ -314,6 +315,11 @@ const panel = http.createServer(async (req, res) => {
         await leave();
         return reply(res, 200, { ok: true });
       }
+    }
+    if (req.method === "GET" && url.pathname.startsWith("/logo/")) {
+      const name = url.pathname.slice("/logo/".length);
+      if (!LOGOS.has(name)) return reply(res, 404, "not found", "text/plain");
+      return reply(res, 200, await fs.readFile(path.join(root, "public", name)), TYPES[".svg"]);
     }
     if (req.method === "GET") {
       const rel = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
