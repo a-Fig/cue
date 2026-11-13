@@ -74,8 +74,9 @@ Tyler's rules from murmur and pi-vi, lightened for the hackathon (2026-11-13):
   or a GIF when it moves (`node .github/pr-media.mjs <pr> <files>` uploads them).
 - Commits to `main` go through PRs; Tyler merges. CI must be green.
 - Every PR that changes `server.js`, `agent.js` or the API gets an Opus or Sol review before it's
-  handed over, and the body says which commits it covered. Docs, templates, styling and
-  page-only (`public/`) changes skip review to keep things moving.
+  handed over, and the body says which commits it covered. Docs, templates, styling,
+  page-only (`public/`) changes, and renames or other mechanical edits (even in those files)
+  skip review to keep things moving (Tyler, 2026-11-13).
 - Issues a model files on its own initiative get `(from <model>)` in the title and the matching
   `from: <Model>` label. An issue Tyler asks for is `from: Tyler`, even though a model typed it.
 
