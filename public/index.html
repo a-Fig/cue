@@ -4,12 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Cue</title>
+  <link rel="icon" href="logo-mark.svg">
+  <!-- The brand kit's faces (brand/README.md). Recall's bot browser can load them; without them the
+       stack falls back to system fonts. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cal+Sans&family=JetBrains+Mono&family=Lato:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <!-- Fixed 1280x720 stage: Recall streams the page at that size. -->
   <main id="stage">
     <header class="status">
+      <img class="mark" src="logo-mark.svg" alt="">
       <span class="dot" id="dot"></span>
       <span id="botName">Cue</span>
       <span class="sep">·</span>
@@ -19,26 +26,26 @@
 
     <section class="view idle active" id="view-idle">
       <div class="idle-mark">
-        <div class="pulse"></div>
-        <p>Listening quietly.</p>
-        <p class="hint">Say "Cue, …" to ask for something directly.</p>
+        <img class="logo" src="logo.svg" alt="cue">
+        <p class="listening">Listening</p>
+        <p class="hint">Say "Cue, …" to ask for something.</p>
       </div>
       <p class="ticker" id="ticker"></p>
     </section>
 
-    <section class="view slide" id="view-slide">
+    <section class="view slide sheet" id="view-slide">
       <h1 id="slideTitle"></h1>
       <ul id="slideBullets"></ul>
     </section>
 
-    <section class="view diagram" id="view-diagram">
+    <section class="view diagram sheet" id="view-diagram">
       <h1 id="diagramTitle"></h1>
       <div class="diagram-box" id="diagramBox"></div>
     </section>
 
     <!-- Answer first, then the evidence: the answer is read from across a call, the page
          excerpt shows where it came from. -->
-    <section class="view research" id="view-research">
+    <section class="view research sheet" id="view-research">
       <div class="answer">
         <p class="kicker" id="researchKicker"></p>
         <h1 class="headline" id="researchHeadline"></h1>
