@@ -1,0 +1,21 @@
+/* Diagrams (views/diagram.js), on the paper sheet from style.css. diagram.js sizes the SVG to the
+   box, so Mermaid's 22px labels stay 22px or larger unless the diagram is too big to fit. */
+.diagram h1 { margin: 0 0 24px; font: 400 56px/1.08 var(--cue-font-display); letter-spacing: -0.01em; }
+.diagram .diagram-box {
+  height: 500px; display: grid; place-items: center; overflow: hidden;
+  background: #ffffff; border: 1px solid var(--line); border-radius: var(--cue-radius-card); padding: 20px;
+}
+.diagram .diagram-box svg { display: block; animation: diagram-in 0.5s ease both; }
+@keyframes diagram-in { from { opacity: 0; } }
+/* Grown in place: what was just added flashes in lime, then settles */
+.diagram .cue-new rect, .diagram .cue-new polygon, .diagram .cue-new circle, .diagram .cue-new path.node-bkg {
+  animation: diagram-new 2.4s ease both;
+}
+@keyframes diagram-new { 0%, 50% { fill: var(--cue-lime); } }
+/* Parse failure: the diagram's labels as a plain row of chips */
+.diagram .diagram-box.fallback { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 18px 14px; padding: 40px; }
+.diagram .fallback .chip {
+  padding: 16px 26px; border-radius: 16px; border: 2px solid var(--accent); background: var(--cue-paper);
+  font-size: 28px; line-height: 1.2;
+}
+.diagram .fallback .arrow { color: var(--accent); font-size: 32px; }

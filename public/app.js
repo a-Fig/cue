@@ -2,6 +2,8 @@
 // Listens to the transcript, asks /api/think what to do, renders the result.
 import { addNotes, currentNotes } from "./views/notes.js";
 import { showComparison } from "./views/compare.js";
+import { showSlide } from "./views/slide.js";
+import { showDiagram } from "./views/diagram.js";
 
 import { allFiller } from "./filler.js";
 
@@ -189,8 +191,6 @@ const viewApi = {
 
 async function apply({ tool, input }) {
   switch (tool) {
-    case "show_slide": return showSlide(input);
-    case "show_diagram": return showDiagram(input);
     case "show_research": return showResearch(input);
     case "caption": return showCaption(input.text);
     case "ping": return ping(input.sound);
@@ -201,6 +201,8 @@ async function apply({ tool, input }) {
     // Views in public/views/ (#18) get only what they need from here.
     case "add_notes": return addNotes(input, viewApi);
     case "show_comparison": return showComparison(input, viewApi);
+    case "show_slide": return showSlide(input, viewApi);
+    case "show_diagram": return showDiagram(input, viewApi);
   }
 }
 
@@ -283,44 +285,6 @@ function setScreen(visible) {
   state.hidden = !visible;
   $("cover").hidden = visible;
   remember(visible ? "screen shown" : "screen hidden");
-}
-
-function showSlide({ title, bullets }) {
-  $("slideTitle").textContent = title;
-  const ul = $("slideBullets");
-  ul.replaceChildren(...bullets.slice(0, 6).map((b, i) => {
-    const li = document.createElement("li");
-    li.textContent = b;
-    li.style.animationDelay = `${i * 90}ms`;
-    return li;
-  }));
-  showView("slide");
-  state.screen = { mode: "slide", title, bullets };
-  remember(`slide: ${title}`);
-}
-
-let mermaidLib;
-async function showDiagram({ title, mermaid }) {
-  try {
-    mermaidLib ||= (await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs")).default;
-    // On the paper sheet, in the brand's colors: ink text, Cue Blue lines (brand/README.md).
-    mermaidLib.initialize({
-      startOnLoad: false, securityLevel: "strict", theme: "base",
-      themeVariables: {
-        background: "#ffffff", primaryColor: "#fefff4", primaryTextColor: "#242515",
-        primaryBorderColor: "#3168b0", lineColor: "#3168b0", secondaryColor: "#eef0e0",
-        tertiaryColor: "#ffffff", fontFamily: "Lato, system-ui, sans-serif", fontSize: "22px",
-      },
-    });
-    const { svg } = await mermaidLib.render(`m${Date.now()}`, mermaid);
-    $("diagramBox").innerHTML = svg;
-    $("diagramTitle").textContent = title;
-    showView("diagram");
-    state.screen = { mode: "diagram", title, mermaid };
-    remember(`diagram: ${title}`);
-  } catch (err) {
-    log("mermaid failed:", err.message);
-  }
 }
 
 // --- research: the answer first, then one excerpt from the page as evidence ---
