@@ -5,6 +5,7 @@ import { showComparison } from "./views/compare.js";
 import { showSlide } from "./views/slide.js";
 import { showDiagram } from "./views/diagram.js";
 import { showVisual } from "./views/visual.js";
+import { showImage } from "./views/image.js";
 
 import { allFiller } from "./filler.js";
 
@@ -191,6 +192,7 @@ function showView(name) {
 }
 
 const viewApi = {
+  token: TOKEN,
   show: showView, remember, mode: () => state.screen.mode, screen: (s) => { state.screen = s; },
   heard: (re) => state.transcript.slice(-3).some((l) => re.test(l.text)), // in the last few lines
 };
@@ -210,6 +212,7 @@ async function apply({ tool, input }) {
     case "show_slide": return showSlide(input, viewApi);
     case "show_diagram": return showDiagram(input, viewApi);
     case "show_visual": return showVisual(input, viewApi);
+    case "show_image": return showImage(input, viewApi);
   }
 }
 

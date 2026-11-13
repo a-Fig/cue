@@ -2,12 +2,16 @@
 //   POST /api/think   transcript in, display actions out (calls Claude)
 //   GET  /api/page    fetches a web page and returns its readable text,
 //                     so the page can render it with highlights
+//   GET  /api/image   finds a freely licensed picture for a query (image.js)
+//   GET  /api/image/raw  serves a picture /api/image found, so the page loads
+//                     images only from this server
 import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { think } from "./agent.js";
 import { fetchReadable, isPublicHttpUrl } from "./page.js";
+import { findImage, fetchVettedImage } from "./image.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
@@ -68,6 +72,30 @@ const server = http.createServer(async (req, res) => {
       const target = url.searchParams.get("url") || "";
       if (!isPublicHttpUrl(target)) return send(res, 400, { error: "url not allowed" });
       return send(res, 200, await fetchReadable(target));
+    }
+
+    if (url.pathname === "/api/image" && req.method === "GET") {
+      if (!authorized(url, req)) return send(res, 401, { error: "bad token" });
+      const q = url.searchParams.get("q") || "";
+      if (!q.trim()) return send(res, 400, { error: "q required" });
+      try {
+        return send(res, 200, await findImage(q));
+      } catch (e) {
+        return send(res, 404, { error: e.message });
+      }
+    }
+
+    // Serves only images /api/image found in the last hour (image.js), so it isn't an open proxy.
+    if (url.pathname === "/api/image/raw" && req.method === "GET") {
+      if (!authorized(url, req)) return send(res, 401, { error: "bad token" });
+      try {
+        const { type, body } = await fetchVettedImage(url.searchParams.get("u") || "");
+        res.writeHead(200, { "content-type": type, "cache-control": "private, max-age=3600",
+          "x-content-type-options": "nosniff", "content-security-policy": "default-src 'none'" });
+        return res.end(body);
+      } catch (e) {
+        return send(res, e.status || 502, { error: e.message });
+      }
     }
 
     if (req.method === "GET") {

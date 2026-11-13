@@ -43,6 +43,8 @@ const checks = [
   ["script served as JS", "/app.js", (r) => r.status === 200 && r.headers.get("content-type").includes("javascript")],
   ["API needs the token", "/api/page?url=https://example.com", (r) => r.status === 401],
   ["internal URLs refused", "/api/page?token=ci-token&url=http://127.0.0.1:22", (r) => r.status === 400],
+  ["image search needs the token", "/api/image?q=bridge", (r) => r.status === 401],
+  ["image proxy serves only vetted images", "/api/image/raw?token=ci-token&u=https://example.com/a.png", (r) => r.status === 403],
   ["no path traversal", "/..%2Fserver.js", (r) => r.status === 403 || r.status === 404],
 ];
 
