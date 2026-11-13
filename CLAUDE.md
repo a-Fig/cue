@@ -28,6 +28,9 @@ stays short.
 | `scripts/panel.mjs`, `panel/` | `npm run panel`: the same from a page on 127.0.0.1 (#32), with a live feed from a local pass-through in front of `server.js`. Never public, never inside `server.js` |
 | `scripts/send-bot.mjs`, `scripts/recall.mjs` | Sends the bot alone; Recall's bot API (create, status, leave) |
 | `scripts/check.mjs` | The CI check: every JS file parses, the server boots and guards its API |
+| `evals/` | `replay.mjs` runs the typed meetings in `transcripts/` through `think()` and scores when Cue acts and when it stays quiet (#10) |
+| `brand/` | Cara's brand kit: colours (`tokens.css`), type, voice, logos. `public/` and `panel/` keep copies of its tokens and three logos, since only `public/` is served. Ask Cara before changing it |
+| `.github/pr-media.mjs` | Uploads PR screenshots to the `pr-media` branch and prints the markdown for the PR body |
 | `docs/VISION.md` | What Cue is for, what it holds to, and the open questions with their issues. A settled question's answer and reason go there, dated. It also compares Cue with Claude Meetings, the reference for judgment calls and design (Tyler, 2026-11-13) |
 
 ## Commands
@@ -38,6 +41,7 @@ npm run check                              # what CI runs, a few seconds, no key
 npm run cue -- <meeting-url>               # server + tunnel + bot, leaves on Ctrl+C or after 60 min; bills Recall
 npm run panel                              # the same from http://127.0.0.1:3900; RECALL_API=<stand-in> tries it unbilled
 npm run send-bot -- <meeting-url>          # the bot only; needs RECALL_API_KEY and a public PUBLIC_URL; bills Recall
+node --env-file=.env evals/replay.mjs [filter]  # score the prompt on evals/transcripts/; every tick is a billed think call
 ```
 
 `?test=1` replaces the meeting with a box for typing transcript lines. Mocking `/api/think` in
@@ -64,8 +68,8 @@ Playwright renders any view without a Claude key (how PR screenshots get made).
   that's already set, so a server started from an agent's shell runs at medium whatever `.env`
   says (2026-11-13).
 - Stopping a background `npm start` can leave its `node server.js` child holding port 3000, and
-  the next start then fails. Find the listener's PID (`Get-NetTCPConnection -LocalPort 3000`) and
-  stop it.
+  the next start then fails. Find the listener's PID and stop it: `Get-NetTCPConnection
+  -LocalPort 3000` on Windows, `lsof -iTCP:3000 -sTCP:LISTEN` on macOS and Linux.
 
 ## Who is on what
 

@@ -1,6 +1,6 @@
 # Cue
 
-A silent AI participant for Zoom, Google Meet and Teams calls. It listens, never speaks, and helps through its shared screen:
+A silent AI participant for video calls, working in Google Meet (Zoom and Teams go through the same Recall bot but are untried, 2026-11-13). It listens, never speaks, and helps through its shared screen:
 
 - **Research:** opens a web page live and highlights the passages that answer the question.
 - **Slides and diagrams:** turns the discussion into bullet slides or Mermaid diagrams as people talk.
@@ -59,9 +59,4 @@ Recall streams the page at 1280×720 and 15 fps. Use its Bot Explorer to open De
 
 ## Files
 
-- `server.js`: serves the page; `/api/think` and `/api/page` (readable text of a page, for highlighting)
-- `agent.js`: the Claude call, system prompt and display tools
-- `public/`: the page the bot shows
-- `scripts/send-bot.mjs`: creates the Recall bot
-- `scripts/panel.mjs`, `panel/`: the local control panel (`npm run panel`)
-- `docs/VISION.md`: what Cue is for, and the questions still open
+What each file and folder is for: the Layout table in [CLAUDE.md](CLAUDE.md#layout). What Cue is for, and the questions still open: [docs/VISION.md](docs/VISION.md).
