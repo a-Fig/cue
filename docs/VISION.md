@@ -23,6 +23,12 @@ shows on its shared screen.
 Tyler, 2026-11-13: "I only want my agent to listen & show visuals. Nothing else." He described
 it as a very silent intern who is super helpful.
 
+The picture to hold (Tyler, 2026-11-13): "Think Joe Rogan asking his producers to pull up a
+video or research something mid podcast." The host asks out loud without leaving the
+conversation. A few seconds later the clip or the article is on a screen everyone can see, and
+the talk carries on with it. The producer doesn't join the conversation. Cue is that producer,
+for any meeting.
+
 A screen can be ignored in a way a voice can't. People glance at it when they want to, which
 lets Cue offer something without taking a turn in the conversation.
 
