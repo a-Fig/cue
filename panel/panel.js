@@ -26,6 +26,7 @@ const TOOL = {
 };
 
 let since = 0;
+let run = "";
 
 const post = (path, body) =>
   fetch(path, { method: "POST", headers: { "content-type": "application/json", "x-cue-panel": "1" }, body: JSON.stringify(body || {}) })
@@ -140,9 +141,9 @@ function render(st) {
   $("costLabel").textContent = active ? "Cost so far" : "Cost";
   $("leavesLabel").textContent = active ? "Leaves by itself" : "Ended";
   $("leavesAt").textContent = active ? `in ${clock(st.sentAt + st.maxMinutes * 60_000 - st.now)}` : st.endedAt ? shortTime(st.endedAt) : "";
-  $("leaveBtn").hidden = !st.botId || !active;
+  $("leaveBtn").hidden = !active;
   $("leaveBtn").disabled = st.phase === "leaving";
-  $("leaveBtn").textContent = st.phase === "leaving" ? "Leaving…" : "Take Cue out";
+  $("leaveBtn").textContent = st.phase === "leaving" ? "Leaving…" : st.phase === "starting" ? "Cancel" : "Take Cue out";
 
   const dot = { lobby: "busy", starting: "busy", joining: "busy", leaving: "busy", in_call: "ok", error: "bad" }[st.phase] || "";
   $("dot").className = `dot ${dot}`;
@@ -169,7 +170,14 @@ function render(st) {
 async function poll() {
   try {
     const r = await fetch(`/api/state?since=${since}`);
-    const st = await r.json();
+    let st = await r.json();
+    if (run && st.run !== run) {
+      // The panel process restarted: its feed ids start again, so take the whole feed.
+      since = 0;
+      $("feed").replaceChildren(empty(""));
+      st = await (await fetch("/api/state?since=0")).json();
+    }
+    run = st.run;
     if (st.feed.length) since = st.feed.at(-1).id;
     render(st);
     $("conn").textContent = "";

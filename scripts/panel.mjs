@@ -38,7 +38,9 @@ const state = {
   endedAt: 0,
   maxMinutes: MAX_MINUTES,
   rate: DOLLARS_PER_HOUR,
+  run: Math.random().toString(36).slice(2), // changes when the panel restarts, so the page refetches its feed
   tapped: false, // do think calls pass through the tap?
+  tunnelLost: false,
   log: [], // { at, text }: what the panel did, in plain words
   feed: [], // { id, at, kind: "heard"|"did"|"quiet"|"failed", ... }
   screen: null, // what the bot's page says is on its screen, from its latest think call
@@ -63,6 +65,7 @@ function problems() {
   const list = [];
   if (!process.env.RECALL_API_KEY) list.push({ level: "error", text: "RECALL_API_KEY isn't set in .env, so Cue can't join a call." });
   if (!process.env.AGENT_TOKEN) list.push({ level: "warn", text: "AGENT_TOKEN isn't set: anyone who finds the tunnel address can spend the Claude key." });
+  if (state.tunnelLost) list.push({ level: "error", text: "The tunnel closed, so Cue can't think any more. Take Cue out and send it again." });
   if (!process.env.ANTHROPIC_API_KEY) list.push({ level: "warn", text: "ANTHROPIC_API_KEY isn't set. Cue can still think if `ant auth login` was run; otherwise it will stay quiet." });
   return list;
 }
@@ -81,12 +84,18 @@ function newLines(transcript) {
   return transcript.slice(i + 1);
 }
 
+const text = (v, max = 300) => (typeof v === "string" ? v.slice(0, max) : undefined);
+
 function recordThink(reqBody, status, resBody, ms) {
+  // Anyone who finds the tunnel address can post here; only calls server.js accepted (the
+  // page's, with the token) are the bot's.
+  if (status === 401) return;
   let sent = {}, got = {};
   try { sent = JSON.parse(reqBody.toString("utf8") || "{}"); } catch {}
   try { got = JSON.parse(resBody.toString("utf8") || "{}"); } catch {}
   for (const l of newLines(sent.transcript)) feed({ kind: "heard", speaker: String(l.speaker || "Someone"), text: String(l.text || "") });
-  if (sent.screen && typeof sent.screen === "object") state.screen = sent.screen;
+  const s = sent.screen;
+  if (s && typeof s === "object") state.screen = { mode: text(s.mode, 40), title: text(s.title), url: text(s.url, 500), audioMuted: Boolean(s.audioMuted), screenHidden: Boolean(s.screenHidden) };
   if (status !== 200) return feed({ kind: "failed", ms, text: String(got.error || `status ${status}`) });
   const actions = Array.isArray(got.actions) ? got.actions : [];
   if (!actions.length) return feed({ kind: "quiet", ms });
@@ -94,7 +103,8 @@ function recordThink(reqBody, status, resBody, ms) {
   // Until the page's next think call says what it shows, assume the last view it was told to show.
   for (const { tool, input = {} } of actions) {
     const mode = { show_slide: "slide", show_diagram: "diagram", show_research: "research", play_video: "video" }[tool];
-    if (mode) state.screen = { ...state.screen, mode, title: input.title, url: input.url, bullets: input.bullets };
+    const bullets = Array.isArray(input.bullets) ? input.bullets.slice(0, 6).map((b) => text(String(b))) : undefined;
+    if (mode) state.screen = { ...state.screen, mode, title: text(input.title), url: text(input.url, 500), bullets };
     if (tool === "stop_video") state.screen = { ...state.screen, mode: "idle" };
   }
 }
@@ -104,6 +114,7 @@ function startTap() {
     const think = req.method === "POST" && req.url.split("?")[0] === "/api/think";
     const started = Date.now();
     const reqChunks = [];
+    let reqBytes = 0;
     const up = http.request(
       { host: "localhost", port: PORT, method: req.method, path: req.url, headers: req.headers },
       (upRes) => {
@@ -120,7 +131,8 @@ function startTap() {
       if (!res.headersSent) res.writeHead(502, { "content-type": "text/plain" });
       res.end("Cue's server isn't answering");
     });
-    if (think) req.on("data", (c) => { if (reqChunks.length < 1000) reqChunks.push(c); });
+    // server.js refuses bodies over 1 MB, so there's no point keeping more.
+    if (think) req.on("data", (c) => { if ((reqBytes += c.length) <= 1_100_000) reqChunks.push(c); });
     req.pipe(up);
   });
   return new Promise((resolve) => tap.listen(0, "127.0.0.1", () => resolve(`http://127.0.0.1:${tap.address().port}`)));
@@ -132,22 +144,35 @@ const children = { server: null, tunnel: null };
 let tapUrl = "";
 let watch = null; // AbortController for the current bot's status loop
 let maxTimer = null;
+let leaveTimer = null;
+let creating = null; // the createBot call, while it is in flight
+let cancelled = false; // "Take Cue out" before the bot was even sent
 
 const PHASE = { joining_call: "joining", in_waiting_room: "lobby", in_call_not_recording: "in_call", in_call_recording: "in_call", call_ended: "leaving", done: "left", fatal: "error" };
 
 // The server and tunnel stay up between bots, so a second send is quick.
 async function ensurePublic() {
   if (!children.server) {
-    children.server = await startServer({ port: PORT, say: step }); // null: one was already running
-    children.server?.on("exit", () => { children.server = null; });
+    const onSpawn = (c) => {
+      children.server = c;
+      c.on("exit", () => { if (children.server === c) children.server = null; });
+    };
+    await startServer({ port: PORT, say: step, onSpawn }); // spawns nothing if one is already running
   }
   if (state.publicUrl && (await servesCue(state.publicUrl))) return state.publicUrl;
   children.tunnel?.kill();
   children.tunnel = null;
   try {
-    const t = await openTunnel(tapUrl, step);
-    children.tunnel = t.child;
-    t.child.on("exit", () => { if (children.tunnel === t.child) { children.tunnel = null; state.publicUrl = ""; } });
+    const t = await openTunnel(tapUrl, step, (c) => { children.tunnel = c; });
+    t.child.on("exit", () => {
+      if (children.tunnel !== t.child) return;
+      children.tunnel = null;
+      state.publicUrl = "";
+      if (["joining", "lobby", "in_call"].includes(state.phase)) {
+        state.tunnelLost = true;
+        step("the tunnel closed, so Cue can't think any more");
+      }
+    });
     state.tapped = true;
     return (state.publicUrl = t.url);
   } catch (err) {
@@ -178,7 +203,8 @@ async function send(meetingUrl) {
   if (["starting", "joining", "lobby", "in_call", "leaving"].includes(state.phase)) throw new Error("Cue is already on its way or in a call.");
   if (!/^https:\/\/\S+$/.test(meetingUrl)) throw new Error("That doesn't look like a meeting link. Paste the whole https://… address.");
   if (!process.env.RECALL_API_KEY) throw new Error("RECALL_API_KEY isn't set in .env.");
-  Object.assign(state, { message: "getting the server and tunnel ready…", meetingUrl, botId: "", sentAt: 0, endedAt: 0, screen: null, phaseAt: {} });
+  Object.assign(state, { message: "getting the server and tunnel ready…", meetingUrl, botId: "", sentAt: 0, endedAt: 0, screen: null, phaseAt: {}, tunnelLost: false });
+  cancelled = false;
   setPhase("starting");
   state.log = [];
   state.feed = [];
@@ -186,8 +212,11 @@ async function send(meetingUrl) {
   (async () => {
     try {
       const url = await ensurePublic();
+      if (cancelled) return;
       state.message = "sending Cue to the meeting…";
-      const bot = await createBot(meetingUrl, url).catch((err) => { throw new Error(plainRecallError(err)); });
+      creating = createBot(meetingUrl, url);
+      const bot = await creating.catch((err) => { throw new Error(plainRecallError(err)); });
+      creating = null;
       Object.assign(state, { botId: bot.id, sentAt: Date.now(), message: STATUS.joining_call });
       setPhase("joining");
       step(`Cue is on its way. It leaves by itself after ${MAX_MINUTES} minutes.`);
@@ -200,9 +229,12 @@ async function send(meetingUrl) {
         step(state.message);
       }, { signal: watch.signal });
       clearTimeout(maxTimer);
+      clearTimeout(leaveTimer);
+      if (watch.signal.aborted) return; // gave up waiting for Recall (see leave)
       if (last?.code !== "fatal") setPhase("left");
       state.endedAt = Date.now();
     } catch (err) {
+      creating = null;
       clearTimeout(maxTimer);
       Object.assign(state, { message: err.message, endedAt: Date.now() });
       setPhase("error");
@@ -213,17 +245,35 @@ async function send(meetingUrl) {
 }
 
 async function leave(why = "taken out from the panel") {
-  if (!state.botId || ["left", "error", "idle"].includes(state.phase)) return;
+  if (["left", "error", "idle", "leaving"].includes(state.phase)) return;
+  // Still getting the server and tunnel ready: just don't send it.
+  if (!state.botId && !creating) {
+    cancelled = true;
+    Object.assign(state, { message: "cancelled before Cue was sent", endedAt: Date.now() });
+    setPhase("left");
+    return step(`${why}: cancelled before Cue was sent`);
+  }
   clearTimeout(maxTimer);
   setPhase("leaving");
   state.message = "taking Cue out of the call…";
   step(`${why}: taking Cue out of the call…`);
   try {
-    await leaveCall(state.botId);
+    // Recall may be creating the bot right now: wait for its id, or it joins with nobody to remove it.
+    const id = state.botId || (await creating?.then((b) => b.id).catch(() => ""));
+    if (id) await leaveCall(id);
   } catch (err) {
     // Already gone, most often. Anything else: the bot may still be billing.
     step(`Recall said: ${err.message}. If Cue is still in the call, remove it from Recall's dashboard.`);
   }
+  // If Recall never confirms, don't leave the panel stuck on "leaving".
+  clearTimeout(leaveTimer);
+  leaveTimer = setTimeout(() => {
+    if (state.phase !== "leaving") return;
+    watch?.abort();
+    Object.assign(state, { message: "Recall hasn't confirmed that Cue left. Check Recall's dashboard: it may still be billing.", endedAt: Date.now() });
+    setPhase("error");
+    step(state.message);
+  }, 90_000);
 }
 
 // ---------- the panel's own page and API ----------

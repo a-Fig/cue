@@ -23,13 +23,16 @@ const children = [];
 const say = (msg) => console.log(`[cue] ${msg}`);
 
 let botId;
+let creating; // the createBot call, while it is in flight
 let leaving = false;
 async function leave(why) {
   if (leaving) return;
   leaving = true;
   say(`${why}: taking Cue out of the call…`);
   try {
-    if (botId) await leaveCall(botId);
+    // A Ctrl+C while Recall is still creating the bot: wait for its id, or the bot joins unwatched.
+    const id = botId || (await creating?.then((b) => b.id).catch(() => ""));
+    if (id) await leaveCall(id);
   } catch (err) {
     // Already gone, most often. Anything else: the bot may still be billing.
     say(`couldn't remove the bot (${err.message}); check Recall's dashboard`);
@@ -44,15 +47,18 @@ function shutdown(code) {
 let interrupts = 0;
 process.on("SIGINT", async () => {
   if (++interrupts > 1) shutdown(130); // second Ctrl+C: stop without waiting
+  if (!botId && !creating) shutdown(130); // nothing sent yet: stop the server and tunnel being started
   await leave("Ctrl+C");
 });
 
 try {
   // Pass through the server's think lines, so the terminal shows what Cue decides.
-  children.push(await startServer({ port: PORT, say, onLine: (l) => console.log(`  ${l}`) }));
-  const tunnel = await publicUrl(`http://localhost:${PORT}`, say);
-  children.push(tunnel.child);
-  const bot = await createBot(meetingUrl, tunnel.url);
+  const onSpawn = (c) => children.push(c);
+  await startServer({ port: PORT, say, onLine: (l) => console.log(`  ${l}`), onSpawn });
+  const tunnel = await publicUrl(`http://localhost:${PORT}`, say, onSpawn);
+  if (leaving) shutdown(130); // Ctrl+C before anything was sent
+  creating = createBot(meetingUrl, tunnel.url);
+  const bot = await creating;
   botId = bot.id;
   say(`bot ${botId} sent to ${meetingUrl}. It leaves after ${MAX_MINUTES} min, or on Ctrl+C.`);
   setTimeout(() => leave(`${MAX_MINUTES} minutes are up`), MAX_MINUTES * 60_000).unref();

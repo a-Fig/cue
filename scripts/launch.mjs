@@ -30,9 +30,10 @@ export async function waitFor(url, seconds) {
 /**
  * Start server.js on `port`, unless something there already serves Cue.
  * Returns the child process, or null when an existing server was reused.
- * `onLine` gets each line the server prints (its think lines).
+ * `onLine` gets each line the server prints (its think lines); `onSpawn` gets the child as soon
+ * as it exists, so a Ctrl+C during the wait can still stop it.
  */
-export async function startServer({ port, say = () => {}, onLine }) {
+export async function startServer({ port, say = () => {}, onLine, onSpawn }) {
   const local = `http://localhost:${port}`;
   if (await servesCue(local)) {
     say(`using the server already running at ${local}`);
@@ -43,6 +44,7 @@ export async function startServer({ port, say = () => {}, onLine }) {
     env: { ...process.env, PORT: String(port) },
     stdio: ["ignore", "pipe", "inherit"],
   });
+  onSpawn?.(server);
   server.stdout.on("data", (d) => String(d).split("\n").filter(Boolean).forEach((l) => onLine?.(l)));
   if (!(await waitFor(local, 15))) {
     server.kill();
@@ -56,9 +58,10 @@ export async function startServer({ port, say = () => {}, onLine }) {
  * Open a cloudflared quick tunnel to `target` (a local http address). Its public address
  * changes every run. Returns { url, child }; `child` must be killed to close the tunnel.
  */
-export async function openTunnel(target, say = () => {}) {
+export async function openTunnel(target, say = () => {}, onSpawn) {
   say("opening a cloudflared tunnel…");
   const child = spawn("cloudflared", ["tunnel", "--url", target], { stdio: ["ignore", "ignore", "pipe"] });
+  onSpawn?.(child);
   try {
     const url = await new Promise((resolve, reject) => {
       child.on("error", () => reject(new Error("cloudflared isn't installed (winget install Cloudflare.cloudflared)")));
@@ -79,13 +82,13 @@ export async function openTunnel(target, say = () => {}) {
 }
 
 /** PUBLIC_URL when it serves Cue's page, else a new quick tunnel to `target`. */
-export async function publicUrl(target, say = () => {}) {
+export async function publicUrl(target, say = () => {}, onSpawn) {
   const configured = process.env.PUBLIC_URL;
   if (configured && (await servesCue(configured))) {
     say(`using PUBLIC_URL ${configured}`);
     return { url: configured, child: null };
   }
-  return openTunnel(target, say);
+  return openTunnel(target, say, onSpawn);
 }
 
 // What Recall's status codes mean for the person running Cue.
