@@ -1,9 +1,9 @@
 /* Diagrams (views/diagram.js), on the paper sheet from style.css. diagram.js sizes the SVG to the
    box, so Mermaid's 22px labels stay 22px or larger unless the diagram is too big to fit. */
-.diagram h1 { margin: 0 0 24px; font: 400 56px/1.08 var(--cue-font-display); letter-spacing: -0.01em; }
+.diagram h1 { margin: 0 0 24px; font: 650 56px/1.08 var(--cue-font-display); letter-spacing: -0.025em; }
 .diagram .diagram-box {
   height: 500px; display: grid; place-items: center; overflow: hidden;
-  background: #ffffff; border: 1px solid var(--line); border-radius: var(--cue-radius-card); padding: 20px;
+  background: #ffffff; border: 1px solid var(--line); border-radius: 16px; padding: 20px;
 }
 .diagram .diagram-box svg { display: block; animation: diagram-in 0.5s ease both; }
 @keyframes diagram-in { from { opacity: 0; } }

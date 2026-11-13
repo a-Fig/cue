@@ -1,36 +1,38 @@
-/* Cue's screen, styled from Cara's brand kit (brand/README.md, brand/tokens.css; 2026-11-13).
-   Ink is the screen while Cue listens; content (slides, research, diagrams) sits on a paper
-   sheet; Cue Blue is its voice on paper; lime is the highlighter, used only on ink or as a mark
-   behind ink text. The screen is seen shrunk into a Meet tile (~320×180 in gallery view), so
-   nothing a person reads is under 24px. */
+/* Cue's screen. Same system as the control panel (#60), which follows Murmur's web UI: a black
+   stage while Cue listens, content (slides, research, diagrams) on a white sheet, Inter, hairline
+   borders, one indigo accent, and a soft yellow highlighter for passages. The --cue-* names are
+   kept from the brand kit (#43) because the views use them; their values changed (2026-11-13,
+   Tyler: the brand colours had to go). The screen is seen shrunk into a Meet tile (~320×180 in
+   gallery view), so nothing a person reads is under 24px. */
 :root {
-  --cue-blue: #3168b0;
-  --cue-lime: #ddff8f;
-  --cue-paper: #fefff4;
-  --cue-paper-dim: #eef0e0;
-  --cue-ink: #242515;
-  --cue-ink-muted: #6b6c5c;
-  --cue-line: #e4e6d6;
-  --cue-font-display: "Cal Sans", "Inter", system-ui, sans-serif;
-  --cue-font-body: "Lato", system-ui, sans-serif;
+  --cue-blue: #4f46e5;      /* indigo: Cue's voice on paper */
+  --cue-lime: #fde68a;      /* the highlighter, behind ink text */
+  --cue-paper: #ffffff;
+  --cue-paper-dim: #f4f4f5;
+  --cue-ink: #09090b;
+  --cue-ink-muted: #71717a;
+  --cue-line: #e4e4e7;
+  --cue-font-display: "Inter", system-ui, sans-serif;
+  --cue-font-body: "Inter", system-ui, sans-serif;
   --cue-font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --cue-radius-card: 28px;
+  --cue-radius-card: 20px;
 
-  /* The names the views use. On ink by default; .sheet redefines them for paper. Blue on ink
-     is only 2.8:1, so on ink the accent is lime. */
+  /* The names the views use. On ink by default; .sheet redefines them for paper. Indigo is
+     too dark to read on ink, so there the accent is a lighter indigo. */
   --bg: var(--cue-ink);
-  --panel: #2e2f1e;
-  --panel-2: #383a27;
-  --line: rgba(254, 255, 244, 0.14);
-  --text: var(--cue-paper);
-  --text-2: #d6d7c8;
-  --muted: #a9aa99;
-  --accent: var(--cue-lime);
+  --panel: #18181b;
+  --panel-2: #27272a;
+  --line: rgba(255, 255, 255, 0.1);
+  --text: #fafafa;
+  --text-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --accent: #a5b4fc;
   --mark: var(--cue-lime);
   --mark-text: var(--cue-ink);
-  --ok: var(--cue-lime);
-  --busy: #f5c451;
-  --bad: #ff8f7a;
+  --ok: #34d399;
+  --busy: #fbbf24;
+  --bad: #f87171;
+  --live: #10b981;
   --font: var(--cue-font-body);
 }
 
@@ -41,7 +43,7 @@
   --panel-2: var(--cue-paper-dim);
   --line: var(--cue-line);
   --text: var(--cue-ink);
-  --text-2: #3d3e2c;
+  --text-2: #3f3f46;
   --muted: var(--cue-ink-muted);
   --accent: var(--cue-blue);
   background: var(--bg);
@@ -81,16 +83,18 @@ html, body {
   gap: 12px;
   padding: 8px 20px 8px 14px;
   border-radius: 999px;
-  background: var(--cue-ink);
-  border: 1px solid rgba(254, 255, 244, 0.14);
+  background: rgba(9, 9, 11, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   font-size: 22px;
-  color: #d6d7c8;
+  font-weight: 500;
+  color: #d4d4d8;
 }
-.status .mark { height: 26px; width: auto; display: block; }
+.status .mark { height: 26px; width: auto; display: block; filter: grayscale(1) brightness(3); }
 .status .sep { display: none; }
 /* The name is the mark; the text stays for screen readers and Bot Explorer. */
 .status #botName { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--cue-lime); }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--live); }
 .dot.busy { background: var(--busy); animation: blink 0.9s infinite alternate; }
 .dot.off { background: var(--bad); }
 @keyframes blink { to { opacity: 0.3; } }
@@ -110,14 +114,14 @@ html, body {
 /* Idle: the lockup on ink, and a quiet line saying it's listening. */
 .idle { display: grid; place-items: center; }
 .idle-mark { display: grid; justify-items: center; gap: 28px; text-align: center; }
-.idle-mark .logo { width: 300px; height: auto; display: block; }
+.idle-mark .logo { width: 260px; height: auto; display: block; filter: grayscale(1) brightness(3); }
 .idle-mark p { margin: 0; }
 .idle-mark .listening {
   display: flex; align-items: center; gap: 12px;
   font-size: 28px; color: var(--text-2);
 }
 .idle-mark .listening::before {
-  content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--cue-lime);
+  content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--live);
   animation: breathe 3s ease-in-out infinite;
 }
 .idle-mark .hint { font-size: 24px; color: var(--muted); }
@@ -152,7 +156,7 @@ html, body {
 .answer { min-width: 0; }
 .kicker { margin: 0 0 14px; color: var(--accent); font-size: 28px; font-weight: 700; }
 .headline {
-  margin: 0 0 22px; font: 400 104px/1.0 var(--cue-font-display); letter-spacing: -0.02em;
+  margin: 0 0 22px; font: 650 104px/1.0 var(--cue-font-display); letter-spacing: -0.02em;
   color: var(--accent); overflow-wrap: anywhere;
 }
 .headline.long { font-size: 68px; line-height: 1.06; }
@@ -173,7 +177,7 @@ html, body {
   margin: 0; padding: 30px 36px 24px; max-height: 100%; overflow: hidden;
   border-radius: var(--cue-radius-card);
   background: var(--panel); border: 1px solid var(--line); color: var(--text);
-  box-shadow: 0 18px 50px rgba(36, 37, 21, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.06);
   transition: opacity 0.35s ease;
 }
 .excerpt.loading blockquote { color: var(--muted); font-style: italic; }
@@ -197,7 +201,7 @@ html, body {
 
 /* Video: on ink, so the picture is the brightest thing. */
 .video { padding-top: 84px; }
-.video h1 { margin: 0 0 18px; font: 400 36px/1.1 var(--cue-font-display); }
+.video h1 { margin: 0 0 18px; font: 650 36px/1.1 var(--cue-font-display); }
 .video-box {
   height: 520px; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid var(--line);
 }
@@ -218,21 +222,26 @@ html, body {
 .cover p { margin: 0 0 10px; }
 .cover .hint { font-size: 24px; color: var(--muted); }
 
-/* Caption: Cue is shy, so a caption is a small note, not a banner. One line on the brand's
-   highlighter (lime is for "found it" moments), ink text, low on the screen, gone in 7 s.
-   Lime with ink text reads on both the ink screen and the paper sheets. */
+/* Caption: Cue is shy, so a caption is a small note, not a banner. A dark card low on the
+   screen, like a call app's own captions, so it reads on the black stage and on white sheets
+   alike; Cue's dot says who it's from. One line, gone in 7 s. */
 .caption {
   position: absolute; left: 50%; bottom: 32px; z-index: 6;
-  max-width: 900px; padding: 10px 24px;
+  max-width: 1000px; padding: 14px 28px 14px 24px;
   transform: translate(-50%, 12px);
-  border-radius: 999px;
-  background: var(--cue-lime); color: var(--cue-ink);
-  box-shadow: 0 8px 24px rgba(36, 37, 21, 0.25);
-  font-size: 28px; font-weight: 700; line-height: 1.25; text-align: center;
+  border-radius: 18px;
+  background: #18181b; color: #fafafa;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  font-size: 28px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.caption.two { white-space: normal; border-radius: 22px; }
+.caption::before {
+  content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 16px;
+  border-radius: 50%; background: #818cf8; vertical-align: 3px;
+}
+.caption.two { white-space: normal; }
 .caption.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* Test panel (outside the stage, only for local testing) */
