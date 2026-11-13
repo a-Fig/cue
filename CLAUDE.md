@@ -42,13 +42,23 @@ Playwright renders any view without a Claude key (how PR screenshots get made).
 - **Recall's page is not a normal browser tab** (Recall docs, 2026-11-13): 1280×720 at 15 fps,
   must be public HTTPS, and can't call localhost, so the API must be public too. Audio the page
   plays goes into the meeting. Bot Explorer gives DevTools on the page while the bot is in a call.
-- **Unverified in a real call so far:** the in-bot transcript websocket's message shape (`app.js`
-  parses it defensively), the `screenshare` output-media key (Recall's example shows `camera`),
-  and YouTube playback, which may ask a cloud IP to sign in. Direct `.mp4` links are safer.
+- **The first real Google Meet call (2026-11-13, #4) worked:** the `screenshare` output-media key
+  shows the page as the bot's screen share, and `app.js`'s parsing of the in-bot transcript
+  websocket gets the lines, though nobody has looked at a raw message yet (the page logs the first
+  10 to the console, for Bot Explorer). Research turns took 10–13 s on Sonnet 5.5. The bot waits in
+  Meet's lobby until someone admits it, and bills from joining until it leaves.
+- **Still unverified:** whether page audio (pings, video sound) reaches the meeting, and whether
+  YouTube plays from Recall's cloud IP or asks it to sign in. Direct `.mp4` links are safer.
 - **Anyone who can open the page can spend the Claude key**, so the API checks `AGENT_TOKEN`.
   `/api/page` refuses internal addresses, but not DNS tricks.
 - The model is `claude-opus-5-5` at low effort (`CLAUDE_MODEL`, `CLAUDE_EFFORT`); every think
-  call is billed, and research calls take several seconds.
+  call is billed, and research calls take several seconds. Claude Code exports
+  `CLAUDE_EFFORT=medium` in its own shell, and `node --env-file` never overrides a variable
+  that's already set, so a server started from an agent's shell runs at medium whatever `.env`
+  says (2026-11-13).
+- Stopping a background `npm start` can leave its `node server.js` child holding port 3000, and
+  the next start then fails. Find the listener's PID (`Get-NetTCPConnection -LocalPort 3000`) and
+  stop it.
 
 ## Who is on what
 
