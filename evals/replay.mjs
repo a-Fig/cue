@@ -52,6 +52,13 @@ function judge(expect, actions) {
   return tools.some((t) => expect.includes(t)) ? "helpful" : "annoying";
 }
 
+// What a tick cost depends on what it did, so costs and latencies are split
+// this way: research means the call searched or fetched the web.
+function kindOf(result) {
+  if (result.usage?.searches || result.usage?.fetches) return "research";
+  return result.actions.length ? "acted" : "quiet";
+}
+
 function brief({ tool, input }) {
   const s = input.title || input.text || input.url || (tool === "set_audio" ? `muted=${input.muted}` : "");
   return s ? `${tool}(${String(s).slice(0, 70)})` : tool;
@@ -78,7 +85,7 @@ async function runTranscript(file) {
     const ms = Date.now() - t0;
     for (const a of result.actions) applyToState(st, a);
     ticks.push({ after: `${line.speaker}: ${line.text}`, expect: line.expect, verdict: judge(line.expect, result.actions),
-      actions: result.actions, note: result.note, ms });
+      actions: result.actions, note: result.note, ms, kind: kindOf(result), usage: result.usage });
   }
   return { file, about, ticks };
 }
@@ -94,7 +101,8 @@ for (const r of runs) {
     count[t.verdict] = (count[t.verdict] || 0) + 1;
     const got = t.actions.map(brief).join(", ") || "quiet";
     const want = Array.isArray(t.expect) ? t.expect.join("|") : t.expect;
-    console.log(`  ${t.verdict.padEnd(11)} ${String(t.ms).padStart(6)}ms  "${t.after.slice(0, 60)}"\n${" ".repeat(26)}want ${want}; got ${got}${t.note ? ` [${t.note}]` : ""}`);
+    const cost = t.usage ? ` $${t.usage.usd.toFixed(4)}` : "";
+    console.log(`  ${t.verdict.padEnd(11)} ${String(t.ms).padStart(6)}ms${cost}  "${t.after.slice(0, 60)}"\n${" ".repeat(26)}want ${want}; got ${got}${t.note ? ` [${t.note}]` : ""}`);
   }
 }
 const n = (k) => count[k] || 0;
@@ -105,7 +113,37 @@ console.log(`\nhelpful ${n("helpful")}, right-quiet ${n("right-quiet")}, annoyin
 console.log(`score ${score} (max ${scored}): helpful + right-quiet - 2*annoying - missed`);
 console.log(`latency median ${all[all.length >> 1]}ms, max ${all.at(-1)}ms; model ${process.env.CLAUDE_MODEL || "claude-opus-5-5"}, effort ${process.env.CLAUDE_EFFORT || "low"}`);
 
+// Cost and latency by kind of tick, then an hour projected from them. The
+// replays over-sample moments worth acting on, so the hour is built from the
+// per-kind means and an assumed mix rather than from the replay's own mix:
+// TICKS_PER_HOUR (default 360, one per 10 s of talk; the page looks every 4 s
+// and thinks after a 2.5 s pause or 15 s of speech), of which
+// RESEARCH_PER_HOUR (default 10) search and ACTED_PER_HOUR (default 10) show
+// something without searching. Replay transcripts are short; a real tick
+// carries up to 4 minutes of transcript, roughly 1k more input tokens.
+const priced = runs.flatMap((r) => r.ticks).filter((t) => t.usage);
+const byKind = {};
+for (const t of priced) (byKind[t.kind] ||= []).push(t);
+const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+const kinds = {};
+for (const [k, ts] of Object.entries(byKind)) {
+  const ms = ts.map((t) => t.ms).sort((a, b) => a - b);
+  const s = kinds[k] = { n: ts.length, usd: mean(ts.map((t) => t.usage.usd)), medianMs: ms[ms.length >> 1], maxMs: ms.at(-1),
+    input: mean(ts.map((t) => t.usage.input + t.usage.cacheRead + t.usage.cacheWrite)), cached: mean(ts.map((t) => t.usage.cacheRead)),
+    output: mean(ts.map((t) => t.usage.output)), searches: mean(ts.map((t) => t.usage.searches)), fetches: mean(ts.map((t) => t.usage.fetches)) };
+  console.log(`${k.padEnd(8)} n=${String(s.n).padStart(2)}  median ${s.medianMs}ms, max ${s.maxMs}ms  $${s.usd.toFixed(4)}/tick  ` +
+    `in ${Math.round(s.input)} (cached ${Math.round(s.cached)}) out ${Math.round(s.output)}  searches ${s.searches.toFixed(1)} fetches ${s.fetches.toFixed(1)}`);
+}
+const total = priced.reduce((a, t) => a + t.usage.usd, 0);
+const env = (k, d) => Number(process.env[k] || d);
+const mix = { ticks: env("TICKS_PER_HOUR", 360), research: env("RESEARCH_PER_HOUR", 10), acted: env("ACTED_PER_HOUR", 10) };
+const per = (k) => kinds[k]?.usd ?? kinds.quiet?.usd ?? 0;
+const hourUsd = (mix.ticks - mix.research - mix.acted) * per("quiet") + mix.research * per("research") + mix.acted * per("acted");
+console.log(`cost this run $${total.toFixed(3)} over ${priced.length} ticks; projected hour $${hourUsd.toFixed(2)} ` +
+  `(${mix.ticks} ticks: ${mix.research} research, ${mix.acted} other visuals, the rest quiet)`);
+
 mkdirSync(path.join(here, "runs"), { recursive: true });
 const out = path.join(here, "runs", `${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
-writeFileSync(out, JSON.stringify({ score, max: scored, count, runs }, null, 2));
+writeFileSync(out, JSON.stringify({ model: process.env.CLAUDE_MODEL || "claude-opus-5-5",
+  effort: process.env.CLAUDE_EFFORT || "low", score, max: scored, count, kinds, total, hour: { usd: hourUsd, ...mix }, runs }, null, 2));
 console.log(`full run: ${path.relative(process.cwd(), out)}`);

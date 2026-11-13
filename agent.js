@@ -94,9 +94,39 @@ const TOOLS = [
 
 const DISPLAY_NAMES = new Set(DISPLAY_TOOLS.map((t) => t.name));
 
+// List prices in dollars per million tokens, read 2026-11-13. Cache reads are
+// 0.1x input and 5-minute cache writes 1.25x on all three. Web search is $10
+// per 1,000 searches; web fetch costs only the tokens it adds. A model not
+// listed here prices at zero, so the cost reads as unknown rather than wrong.
+const PRICES = {
+  "claude-opus-5-5": { in: 4, out: 20 },
+  "claude-sonnet-5-5": { in: 2, out: 10 },
+  "claude-haiku-5-5": { in: 0.1, out: 0.5 },
+};
+const SEARCH_USD = 10 / 1000;
+
+// Sums the usage of every request a think() made (pause_turn resumes are
+// separate requests) and prices it.
+function tally(responses) {
+  const u = { model: responses.at(-1)?.model || MODEL, requests: responses.length,
+    input: 0, cacheRead: 0, cacheWrite: 0, output: 0, searches: 0, fetches: 0, usd: 0 };
+  for (const r of responses) {
+    const x = r.usage || {};
+    const p = PRICES[r.model] || PRICES[MODEL] || { in: 0, out: 0 };
+    const input = x.input_tokens || 0, read = x.cache_read_input_tokens || 0;
+    const write = x.cache_creation_input_tokens || 0, output = x.output_tokens || 0;
+    const searches = x.server_tool_use?.web_search_requests || 0;
+    u.input += input; u.cacheRead += read; u.cacheWrite += write; u.output += output;
+    u.searches += searches; u.fetches += x.server_tool_use?.web_fetch_requests || 0;
+    u.usd += (input * p.in + read * p.in * 0.1 + write * p.in * 1.25 + output * p.out) / 1e6 + searches * SEARCH_USD;
+  }
+  return u;
+}
+
 /**
  * @param {{transcript: {speaker: string, text: string}[], screen: object, recentActions: string[]}} input
- * @returns {Promise<{actions: {tool: string, input: object}[], note?: string}>}
+ * @returns {Promise<{actions: {tool: string, input: object}[], note?: string, usage: object, ms: number}>}
+ *   usage is summed over every request the call made, with `usd` at list price.
  */
 export async function think({ transcript, screen, recentActions }) {
   const lines = transcript.map((l) => `${l.speaker || "Someone"}: ${l.text}`).join("\n");
@@ -107,6 +137,9 @@ TRANSCRIPT (oldest first, last line is newest):
 ${lines || "(silence)"}`;
 
   const messages = [{ role: "user", content: user }];
+  const started = Date.now();
+  const responses = [];
+  const done = (result) => ({ ...result, usage: tally(responses), ms: Date.now() - started });
 
   // pause_turn means a long server-tool turn paused; send it back to continue.
   for (let i = 0; i < 4; i++) {
@@ -115,25 +148,32 @@ ${lines || "(silence)"}`;
       max_tokens: 16000,
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
+      // Two breakpoints. The one on the system prompt caches tools + system
+      // (~8.5k tokens), the same on every tick, so each tick reads it at 0.1x.
+      // The top-level one caches the whole request, which only the server-tool
+      // steps inside a research call reuse. With the top-level one alone,
+      // every tick paid 1.25x to write a cache no later tick could read
+      // (2026-11-13: quiet ticks $0.0225, cache reads 0).
       cache_control: { type: "ephemeral" },
       output_config: { effort: EFFORT },
-      system: SYSTEM,
+      system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       tools: TOOLS,
       messages,
     });
+    responses.push(response);
 
     if (response.stop_reason === "pause_turn") {
       messages.push({ role: "assistant", content: response.content });
       continue;
     }
     if (response.stop_reason === "refusal") {
-      return { actions: [], note: "refusal" };
+      return done({ actions: [], note: "refusal" });
     }
 
     const actions = response.content
       .filter((b) => b.type === "tool_use" && DISPLAY_NAMES.has(b.name))
       .map((b) => ({ tool: b.name, input: b.input }));
-    return { actions };
+    return done({ actions });
   }
-  return { actions: [], note: "gave up after repeated pause_turn" };
+  return done({ actions: [], note: "gave up after repeated pause_turn" });
 }

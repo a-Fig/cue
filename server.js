@@ -95,7 +95,10 @@ const server = http.createServer(async (req, res) => {
         screen: body.screen,
         recentActions: (body.recentActions || []).slice(-6),
       });
-      console.log(`think ${Date.now() - started}ms ->`, result.actions.map((a) => a.tool).join(", ") || "quiet");
+      const u = result.usage;
+      console.log(`think ${Date.now() - started}ms $${u.usd.toFixed(4)} (in ${u.input + u.cacheRead + u.cacheWrite}, ` +
+        `cached ${u.cacheRead}, out ${u.output}, searches ${u.searches}, fetches ${u.fetches}) ->`,
+        result.actions.map((a) => a.tool).join(", ") || "quiet");
       return send(res, 200, result);
     }
 
