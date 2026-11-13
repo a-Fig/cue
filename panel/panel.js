@@ -19,6 +19,7 @@ const ICON = {
   bell: '<path d="M10.3 21a2 2 0 0 0 3.4 0"/><path d="M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.5 18 8A6 6 0 0 0 6 8c0 4.5-1.4 6-2.7 7.3"/>',
   zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
   quiet: '<path d="M5 12h14"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
   mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/>',
   door: '<path d="M13 4h3a2 2 0 0 1 2 2v14M2 20h3M13 20h9M10 12v.01"/><path d="M13 4.56v16.16a.5.5 0 0 1-.63.48L5 19.13V5.56a2 2 0 0 1 1.47-1.93l4-1.08A2 2 0 0 1 13 4.56Z"/>',
 };
@@ -165,12 +166,11 @@ function renderFeed(st, items) {
 function emptyFor(st) {
   const wasIn = Boolean(st.phaseAt?.in_call);
   if (st.phase === "error") return ["alert", wasIn ? "Something went wrong" : "Cue couldn't get into the call", st.message, "bad"];
-  if (st.publicUrl && !st.tapped) return ["alert", "No live feed", "Cue is using PUBLIC_URL, so its think calls skip the panel.", ""];
   return {
     starting: ["loader", "Getting ready", "Starting the server and opening a tunnel. This takes up to a minute."],
     joining: ["loader", "Joining the call", "Cue is dialling in."],
     lobby: ["door", "Admit Cue from the meeting", "It's waiting in the lobby. Someone in the call has to let it in.", "wait"],
-    in_call: ["mic", "Listening", "What people say, and what Cue does about it, shows up here."],
+    in_call: ["mic", "Waiting for someone to speak…", "If Cue is still in the lobby, admit it, then speak in the call. Lines show up here a few seconds after they're said, with what Cue does about them.", "calm"],
     leaving: ["loader", "Leaving", "Waiting for Recall to confirm."],
     left: ["out", "Cue left the call", "Nothing was said while it was in."],
   }[st.phase] || ["mic", "Nothing yet", ""];
@@ -256,7 +256,7 @@ function render(st) {
   leave.disabled = st.phase === "leaving";
   leave.replaceChildren(icon("out"), document.createTextNode(st.phase === "starting" ? "Cancel" : st.phase === "leaving" ? "Leaving…" : "Take Cue out"));
 
-  $("meetingLabel").textContent = st.meetingUrl;
+  $("meetingLabel").textContent = meetingCode(st.meetingUrl);
   $("meetingLabel").title = st.meetingUrl;
   renderTimeline(st);
   const note = $("phaseDetail");
@@ -267,7 +267,8 @@ function render(st) {
   $("elapsed").textContent = clock(ms);
   const recall = (ms / 3_600_000) * st.rate, models = st.modelUsd || 0;
   $("cost").textContent = `$${(recall + models).toFixed(2)}`;
-  $("costBreakdown").textContent = `Recall $${recall.toFixed(2)} · models $${models.toFixed(models < 1 ? 3 : 2)}`;
+  // No usage reported yet is not the same as $0: show a dash until a think call says what it cost.
+  $("costBreakdown").textContent = `Recall $${recall.toFixed(2)} · models ${st.modelSeen ? `$${models.toFixed(models < 1 ? 3 : 2)}` : "—"}`;
   $("costLabel").textContent = active ? "Cost so far" : "Cost";
   $("leavesLabel").textContent = active ? "Leaves by itself in" : "Ended";
   $("leavesAt").textContent = active ? (st.sentAt ? clock(st.sentAt + st.maxMinutes * 60_000 - st.now) : `${st.maxMinutes}:00`) : st.endedAt ? hm(st.endedAt) : "—";
@@ -319,7 +320,30 @@ $("sendForm").onsubmit = async (e) => {
     $("sendBtn").disabled = false;
   }
 };
-$("leaveBtn").onclick = () => post("/api/leave").catch((err) => alert(err.message));
+// "https://meet.google.com/zxb-pcxx-xxx?authuser=0" → "zxb-pcxx-xxx"; the full link is the tooltip.
+function meetingCode(url) {
+  try {
+    const u = new URL(url);
+    return u.pathname.replace(/^\/+|\/+$/g, "") || u.host;
+  } catch {
+    return url || "";
+  }
+}
+let copiedTimer = null;
+$("copyMeeting").append(icon("copy"));
+$("copyMeeting").onclick = async () => {
+  const b = $("copyMeeting");
+  try {
+    await navigator.clipboard.writeText($("meetingLabel").title);
+    b.replaceChildren(icon("check"));
+    b.classList.add("done");
+  } catch {
+    b.title = "Couldn't copy: select the link from the tooltip instead";
+  }
+  clearTimeout(copiedTimer);
+  copiedTimer = setTimeout(() => { b.replaceChildren(icon("copy")); b.classList.remove("done"); }, 1500);
+};
+$("leaveBtn").onclick =() => post("/api/leave").catch((err) => alert(err.message));
 
 // A link copied with stray spaces or the "Join with Google Meet" text around it.
 $("meetingUrl").addEventListener("paste", (e) => {

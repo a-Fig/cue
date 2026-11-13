@@ -11,8 +11,10 @@
 // What Cue hears and does: the transcript lives in the bot's page, not in server.js, so the
 // tunnel points at a small pass-through ("tap") that the panel runs on 127.0.0.1 in front of
 // server.js. It forwards every request and response unchanged and keeps, in memory only, the
-// transcript lines and actions of each POST /api/think. If the panel has to fall back to an
-// existing PUBLIC_URL, think calls don't pass through it and the feed stays empty.
+// transcript lines and actions of each POST /api/think. The panel always opens its own quick
+// tunnel to the tap, even when PUBLIC_URL already serves Cue: a bot sent to PUBLIC_URL thinks
+// straight through server.js, and the feed, action count and model cost stay empty (seen in a
+// live call, 2026-11-13). The tap still forwards to whichever server is on PORT.
 import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -40,11 +42,11 @@ const state = {
   maxMinutes: MAX_MINUTES,
   rate: DOLLARS_PER_HOUR,
   run: Math.random().toString(36).slice(2), // changes when the panel restarts, so the page refetches its feed
-  tapped: false, // do think calls pass through the tap?
   tunnelLost: false,
   log: [], // { at, text }: what the panel did, in plain words
   feed: [], // { id, at, kind: "heard"|"did"|"quiet"|"failed", ... }
   modelUsd: 0, // Claude and Jev spend of this bot's think calls (each response's usage.usd)
+  modelSeen: false, // has a think call reported its usage yet? Until one has, the page shows "—", not $0
   screen: null, // what the bot's page says is on its screen, from its latest think call
 };
 let feedId = 0;
@@ -98,7 +100,10 @@ function recordThink(reqBody, status, resBody, ms) {
   for (const l of newLines(sent.transcript)) feed({ kind: "heard", speaker: String(l.speaker || "Someone"), text: String(l.text || "") });
   const s = sent.screen;
   if (s && typeof s === "object") state.screen = { mode: text(s.mode, 40), title: text(s.title), url: text(s.url, 500), audioMuted: Boolean(s.audioMuted), screenHidden: Boolean(s.screenHidden) };
-  if (status === 200 && Number.isFinite(got.usage?.usd)) state.modelUsd += got.usage.usd;
+  if (status === 200 && Number.isFinite(got.usage?.usd)) {
+    state.modelUsd += got.usage.usd;
+    state.modelSeen = true;
+  }
   if (status !== 200) return feed({ kind: "failed", ms, text: String(got.error || `status ${status}`) });
   const actions = Array.isArray(got.actions) ? got.actions : [];
   if (!actions.length) return feed({ kind: "quiet", ms });
@@ -162,31 +167,21 @@ async function ensurePublic() {
     };
     await startServer({ port: PORT, say: step, onSpawn }); // spawns nothing if one is already running
   }
-  if (state.publicUrl && (await servesCue(state.publicUrl))) return state.publicUrl;
+  // Only ever the panel's own tunnel to the tap, never PUBLIC_URL (see the top of this file).
+  if (children.tunnel && state.publicUrl && (await servesCue(state.publicUrl))) return state.publicUrl;
   children.tunnel?.kill();
   children.tunnel = null;
-  try {
-    const t = await openTunnel(tapUrl, step, (c) => { children.tunnel = c; });
-    t.child.on("exit", () => {
-      if (children.tunnel !== t.child) return;
-      children.tunnel = null;
-      state.publicUrl = "";
-      if (["joining", "lobby", "in_call"].includes(state.phase)) {
-        state.tunnelLost = true;
-        step("the tunnel closed, so Cue can't think any more");
-      }
-    });
-    state.tapped = true;
-    return (state.publicUrl = t.url);
-  } catch (err) {
-    const configured = process.env.PUBLIC_URL;
-    if (configured && (await servesCue(configured))) {
-      step(`${err.message}; using PUBLIC_URL ${configured} instead (the live feed stays empty)`);
-      state.tapped = false;
-      return (state.publicUrl = configured);
+  const t = await openTunnel(tapUrl, step, (c) => { children.tunnel = c; });
+  t.child.on("exit", () => {
+    if (children.tunnel !== t.child) return;
+    children.tunnel = null;
+    state.publicUrl = "";
+    if (["joining", "lobby", "in_call"].includes(state.phase)) {
+      state.tunnelLost = true;
+      step("the tunnel closed, so Cue can't think any more");
     }
-    throw err;
-  }
+  });
+  return (state.publicUrl = t.url);
 }
 
 // "Recall returned 400: {"meeting_url":["not a supported meeting"]}" → something a person reads.
@@ -206,7 +201,7 @@ async function send(meetingUrl) {
   if (["starting", "joining", "lobby", "in_call", "leaving"].includes(state.phase)) throw new Error("Cue is already on its way or in a call.");
   if (!/^https:\/\/\S+$/.test(meetingUrl)) throw new Error("That doesn't look like a meeting link. Paste the whole https://… address.");
   if (!process.env.RECALL_API_KEY) throw new Error("RECALL_API_KEY isn't set in .env.");
-  Object.assign(state, { message: "getting the server and tunnel ready…", meetingUrl, botId: "", sentAt: 0, endedAt: 0, screen: null, modelUsd: 0, phaseAt: {}, tunnelLost: false });
+  Object.assign(state, { message: "getting the server and tunnel ready…", meetingUrl, botId: "", sentAt: 0, endedAt: 0, screen: null, modelUsd: 0, modelSeen: false, phaseAt: {}, tunnelLost: false });
   cancelled = false;
   setPhase("starting");
   state.log = [];
