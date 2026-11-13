@@ -4,12 +4,37 @@
 // fire-and-forget, and the page renders whatever Claude asked for.
 import Anthropic from "@anthropic-ai/sdk";
 import { thinkGemini } from "./gemini.js";
+import { readFileSync, statSync } from "node:fs";
 
 const client = new Anthropic();
 // "claude" (default) or "gemini"; see gemini.js.
 const PROVIDER = process.env.CUE_MODEL_PROVIDER || "claude";
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
 const EFFORT = process.env.CLAUDE_EFFORT || "low";
+
+// The local control panel (#32) can change the model and effort during a call: it writes
+// .cue-settings.json next to this file (gitignored, never served), and each think call re-reads
+// it when its mtime changes. Only these values count; anything else falls back to the env vars.
+export const MODELS = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"];
+export const EFFORTS = ["low", "medium", "high"];
+const SETTINGS_FILE = new URL("./.cue-settings.json", import.meta.url);
+let settingsCache = { mtime: -1, model: MODEL, effort: EFFORT };
+function liveSettings() {
+  try {
+    const mtime = statSync(SETTINGS_FILE).mtimeMs;
+    if (mtime !== settingsCache.mtime) {
+      const f = JSON.parse(readFileSync(SETTINGS_FILE, "utf8"));
+      settingsCache = {
+        mtime,
+        model: MODELS.includes(f.model) ? f.model : MODEL,
+        effort: EFFORTS.includes(f.effort) ? f.effort : EFFORT,
+      };
+    }
+  } catch {
+    settingsCache = { mtime: -1, model: MODEL, effort: EFFORT }; // no file, or unreadable
+  }
+  return settingsCache;
+}
 
 const SYSTEM = `You are "Cue": a silent participant in a live video meeting. You never speak. You only listen to the transcript and help through the visuals on your shared screen, short captions, and the occasional ping sound.
 
@@ -373,10 +398,11 @@ ${lines || "(silence)"}`;
     return finish(g.actions, g.note, g.usage);
   }
 
+  const live = liveSettings();
   // pause_turn means a long server-tool turn paused; send it back to continue.
   for (let i = 0; i < 4; i++) {
     const response = await client.beta.messages.create({
-      model: MODEL,
+      model: live.model,
       max_tokens: 16000,
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
@@ -387,7 +413,7 @@ ${lines || "(silence)"}`;
       // every tick paid 1.25x to write a cache no later tick could read
       // (2026-11-13: quiet ticks $0.0225, cache reads 0).
       cache_control: { type: "ephemeral" },
-      output_config: { effort: EFFORT },
+      output_config: { effort: live.effort },
       system: [{ type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } }],
       tools: TOOLS,
       messages,

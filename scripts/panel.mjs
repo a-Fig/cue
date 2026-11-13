@@ -296,10 +296,25 @@ async function readJson(req) {
   return JSON.parse(raw || "{}");
 }
 
+// The model and effort Cue thinks with. agent.js re-reads this file before each think call, so a
+// change here applies from the next look, with no restart. Without the file, the env vars apply.
+const SETTINGS_FILE = path.join(root, ".cue-settings.json");
+const MODEL_CHOICES = ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"];
+const EFFORT_CHOICES = ["low", "medium", "high"];
+async function readSettings() {
+  const f = JSON.parse((await fs.readFile(SETTINGS_FILE, "utf8").catch(() => "")) || "{}");
+  return {
+    model: MODEL_CHOICES.includes(f.model) ? f.model : process.env.CLAUDE_MODEL || "claude-opus-5-5",
+    effort: EFFORT_CHOICES.includes(f.effort) ? f.effort : process.env.CLAUDE_EFFORT || "low",
+    models: MODEL_CHOICES, efforts: EFFORT_CHOICES,
+  };
+}
+
 const panel = http.createServer(async (req, res) => {
   if (!HOSTS.has(req.headers.host)) return reply(res, 403, "wrong host", "text/plain");
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
+    if (req.method === "GET" && url.pathname === "/api/settings") return reply(res, 200, await readSettings());
     if (req.method === "GET" && url.pathname === "/api/state") {
       const since = Number(url.searchParams.get("since") || 0);
       return reply(res, 200, { ...state, now: Date.now(), problems: problems(), feed: state.feed.filter((f) => f.id > since) });
@@ -310,6 +325,12 @@ const panel = http.createServer(async (req, res) => {
         const body = await readJson(req);
         await send(String(body.meetingUrl || "").trim());
         return reply(res, 200, { ok: true });
+      }
+      if (url.pathname === "/api/settings") {
+        const body = await readJson(req);
+        if (!MODEL_CHOICES.includes(body.model) || !EFFORT_CHOICES.includes(body.effort)) return reply(res, 400, { error: "unknown model or effort" });
+        await fs.writeFile(SETTINGS_FILE, JSON.stringify({ model: body.model, effort: body.effort }) + "\n");
+        return reply(res, 200, await readSettings());
       }
       if (url.pathname === "/api/leave") {
         await leave();
