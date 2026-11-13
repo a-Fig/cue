@@ -36,7 +36,7 @@ const files = readdirSync(path.join(here, "transcripts"))
 function applyToState(st, { tool, input }) {
   const remember = (t) => { st.recentActions.push(t); st.recentActions = st.recentActions.slice(-6); };
   switch (tool) {
-    case "show_slide": st.screen = { mode: "slide", title: input.title, bullets: input.bullets }; return remember(`slide: ${input.title}`);
+    case "show_slide": st.screen = { mode: "slide", ...input }; return remember(`slide (${input.layout}): ${input.title}`);
     case "show_diagram": st.screen = { mode: "diagram", title: input.title, mermaid: input.mermaid }; return remember(`diagram: ${input.title}`);
     case "show_research": st.screen = { mode: "research", title: input.title, url: input.url }; return remember(`research: ${input.title}`);
     case "play_video": st.screen = { mode: "video", title: input.title, url: input.url }; return remember(`video: ${input.title}`);

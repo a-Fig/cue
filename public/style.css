@@ -128,42 +128,6 @@ html, body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Slide */
-.slide h1, .diagram h1 {
-  margin: 0 0 32px; font: 400 56px/1.08 var(--cue-font-display); letter-spacing: -0.01em;
-}
-.slide ul { margin: 0; padding: 0; list-style: none; counter-reset: item; }
-.slide li {
-  position: relative;
-  margin: 0 0 16px;
-  padding: 16px 28px 16px 72px;
-  border-radius: 18px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  font-size: 30px;
-  line-height: 1.3;
-  animation: rise 0.4s ease both;
-}
-.slide li::before {
-  content: counter(item);
-  counter-increment: item;
-  position: absolute; left: 28px; top: 16px;
-  color: var(--accent); font: 400 30px/1.3 var(--cue-font-display);
-}
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-
-/* Diagram */
-.diagram-box {
-  height: 500px;
-  display: grid;
-  place-items: center;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--cue-radius-card);
-  padding: 24px;
-}
-.diagram-box svg { max-width: 100%; max-height: 452px; height: auto; }
-
 /* Research: the answer, sized for the back of the room (Google's answer box, keynote
    slides), and one excerpt from the page as evidence (Perplexity's sources, a featured
    snippet). */

@@ -1,0 +1,66 @@
+/* Slides (views/slide.js), on the paper sheet from style.css. Nothing a person reads is under 24px:
+   the screen is seen shrunk into a Meet tile. */
+.slide .slide-body { height: 100%; display: flex; flex-direction: column; }
+.slide h1 { margin: 0 0 32px; font: 400 56px/1.08 var(--cue-font-display); letter-spacing: -0.01em; }
+.slide .kicker {
+  margin: 0 0 12px; color: var(--accent); font: 700 26px/1.2 var(--font);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.slide .sub { margin: 20px 0 0; color: var(--muted); font-size: 32px; line-height: 1.3; max-width: 1000px; }
+.slide ul { margin: 0; padding: 0; list-style: none; counter-reset: item; }
+.slide li {
+  position: relative; margin: 0 0 16px; padding: 16px 28px 16px 72px;
+  border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
+  font-size: 30px; line-height: 1.3; animation: slide-rise 0.4s ease both;
+}
+.slide li::before {
+  content: counter(item); counter-increment: item; position: absolute; left: 28px; top: 16px;
+  color: var(--accent); font: 400 30px/1.3 var(--cue-font-display);
+}
+.slide ul.dense li { margin-bottom: 10px; padding: 10px 24px 10px 66px; font-size: 27px; }
+.slide ul.dense li::before { top: 10px; font-size: 27px; }
+@keyframes slide-rise { from { opacity: 0; transform: translateY(8px); } }
+
+/* Section: a title card when the meeting moves on */
+.slide .layout-section { justify-content: center; padding-bottom: 40px; }
+.slide .layout-section h1 { margin: 0; font-size: 88px; max-width: 1060px; }
+.slide .layout-section .kicker::before {
+  content: ""; display: inline-block; width: 40px; height: 6px; margin-right: 14px; vertical-align: 6px;
+  border-radius: 3px; background: var(--accent);
+}
+
+/* Stat: one figure, as big as the room needs it */
+.slide .layout-stat { justify-content: center; padding-bottom: 40px; }
+.slide .layout-stat .big {
+  margin: 0; font: 400 200px/1 var(--cue-font-display); letter-spacing: -0.03em; color: var(--text);
+  align-self: flex-start;
+  background: linear-gradient(transparent 62%, var(--cue-lime) 62%, var(--cue-lime) 92%, transparent 92%);
+  padding: 0 12px; margin-left: -12px;
+}
+.slide .layout-stat .sub { color: var(--text); font-size: 38px; }
+.slide .layout-stat .note { margin: 18px 0 0; color: var(--muted); font-size: 26px; }
+
+/* Quote */
+.slide .layout-quote { justify-content: center; padding-bottom: 40px; }
+.slide blockquote {
+  position: relative; margin: 0; padding-left: 44px; border-left: 8px solid var(--cue-lime);
+  font: 400 54px/1.2 var(--cue-font-display); letter-spacing: -0.01em; max-width: 1080px;
+}
+.slide blockquote.long { font-size: 40px; }
+.slide blockquote::before { content: "“"; position: absolute; left: -64px; top: -18px; color: var(--accent); font-size: 120px; }
+.slide .by { margin: 28px 0 0 52px; color: var(--muted); font-size: 30px; }
+
+/* Two columns: before/after, pros/cons */
+.slide .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; flex: 1; min-height: 0; }
+.slide .col {
+  padding: 26px 30px; border-radius: var(--cue-radius-card); background: var(--panel);
+  border: 1px solid var(--line); overflow: hidden;
+}
+.slide .col-1 { border: 2px solid var(--accent); }
+.slide .col h2 {
+  margin: 0 0 18px; font: 700 26px/1.2 var(--font); text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.slide .col-1 h2 { color: var(--accent); }
+.slide .col li { padding: 0 0 0 30px; margin: 0 0 14px; border: 0; background: none; border-radius: 0; font-size: 28px; }
+.slide .col li::before { content: "•"; left: 4px; top: 0; font-size: 28px; }
