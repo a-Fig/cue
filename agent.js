@@ -186,12 +186,70 @@ export function videoWasAsked(transcript) {
   return transcript.slice(-6).some((l) => VIDEO_ASK.test(l.text || ""));
 }
 
+// System 1 / System 2 (#50). Jev, TypeSafe's decision model on OpenRouter,
+// is Cue's reflex: on each tick it answers one question, "would putting
+// something on the screen right now help?", in about 0.2-0.9 s for about
+// $0.000015. Only when it doesn't say a confident "no" does Claude (System 2)
+// get the tick and decide what to show. On by default when OPENROUTER_API_KEY
+// is set; CUE_GATE=off turns it off. Being addressed ("Cue, ...") skips the
+// reflex, and any error or a slow answer fails open to Claude, so the gate
+// can only save calls, never miss a request.
+const JEV_MODEL = process.env.OPENROUTER_JEV_MODEL || "typesafe/jev-1.13";
+const JEV_ON = process.env.CUE_GATE === "jev" || (!!process.env.OPENROUTER_API_KEY && process.env.CUE_GATE !== "off");
+// Stay quiet only when Jev puts at least this probability on "no".
+const JEV_QUIET_AT = Number(process.env.JEV_QUIET_AT || 0.7);
+const JEV_TIMEOUT_MS = 2500;
+const JEV_QUESTION = {
+  type: "score",
+  instructions:
+    "You are the reflex of Cue, a silent assistant that runs the shared screen in a video meeting, like an intern in charge of the projector. " +
+    "Looking at the newest transcript lines, would putting something on the shared screen right now clearly help the people in this meeting? " +
+    "Yes when: someone asks for something to be shown or looked up; they are unsure of a fact or number; they compare options; a plan, process or list is forming; " +
+    "someone mentions a video, chart, map or page. No when: small talk, greetings, scheduling chatter, agreement noises, or what's needed is already on CURRENT SCREEN.",
+  criteria: ["No, stay quiet", "Maybe", "Yes, act now"],
+};
+// Cue was spoken to: the reflex never stands between a request and Claude.
+const ADDRESSED = /\b(?:cue|queue|q|intern)\b/i;
+
+async function jevGate({ lines, screen, recentActions }) {
+  const started = Date.now();
+  try {
+    const r = await fetch("https://openrouter.ai/api/alpha/decisions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, "Content-Type": "application/json", "X-Title": "Cue" },
+      signal: AbortSignal.timeout(JEV_TIMEOUT_MS),
+      body: JSON.stringify({
+        model: JEV_MODEL,
+        state: {
+          transcript_newest_last: lines.slice(-12).join("\n") || "(silence)",
+          current_screen: JSON.stringify(screen || { mode: "idle" }),
+          recent_actions: recentActions?.length ? recentActions.join(" | ") : "none",
+        },
+        questions: { act: JEV_QUESTION },
+      }),
+    });
+    if (!r.ok) throw new Error(`jev ${r.status}`);
+    const payload = await r.json();
+    const a = payload.answers?.act;
+    const quietP = Number(a?.probabilities?.["0"]);
+    if (!Number.isFinite(quietP)) throw new Error("jev: no probabilities");
+    const gate = { model: payload.model || JEV_MODEL, score: a.score, confidence: a.confidence ?? null,
+      quiet: quietP, ms: Date.now() - started, usd: payload.usage?.cost || 0, act: quietP < JEV_QUIET_AT };
+    console.log(`jev: ${gate.act ? "act" : "quiet"} score ${a.score} p(quiet) ${quietP} conf ${gate.confidence} ${gate.ms}ms`);
+    return gate;
+  } catch (e) {
+    console.warn("jev gate failed, asking Claude:", e.message);
+    return { model: JEV_MODEL, act: true, error: e.message, ms: Date.now() - started };
+  }
+}
+
 /**
- * @param {{transcript: {speaker: string, text: string}[], screen: object, recentActions: string[]}} input
- * @returns {Promise<{actions: {tool: string, input: object}[], note?: string, usage: object, ms: number}>}
+ * @param {{transcript: {speaker: string, text: string}[], screen: object, recentActions: string[], addressed?: boolean}} input
+ * @returns {Promise<{actions: {tool: string, input: object}[], note?: string, usage: object, ms: number, gate?: object}>}
  *   usage is summed over every request the call made, with `usd` at list price.
+ *   gate is System 1's (Jev's) answer, when it ran.
  */
-export async function think({ transcript, screen, recentActions }) {
+export async function think({ transcript, screen, recentActions, addressed }) {
   const lines = transcript.map((l) => `${l.speaker || "Someone"}: ${l.text}`).join("\n");
   // The date is here rather than in SYSTEM so the cached prompt stays the same all day.
   // en-CA formats as YYYY-MM-DD in the server's time zone (the meeting's, usually), not UTC.
@@ -205,8 +263,18 @@ ${lines || "(silence)"}`;
   const messages = [{ role: "user", content: user }];
   const started = Date.now();
   const responses = [];
-  const done = (result) => ({ ...result, usage: tally(responses), ms: Date.now() - started });
+  let jev;
+  const done = (result) => {
+    const usage = tally(responses);
+    if (jev?.usd) usage.usd += jev.usd;
+    return { ...result, usage, ms: Date.now() - started, ...(jev && { gate: jev }) };
+  };
 
+  const spokenTo = addressed || transcript.slice(-3).some((l) => ADDRESSED.test(l.text || ""));
+  if (JEV_ON && !spokenTo) {
+    jev = await jevGate({ lines: transcript.map((l) => `${l.speaker || "Someone"}: ${l.text}`), screen, recentActions });
+    if (!jev.act) return done({ actions: [], note: "jev: quiet" });
+  }
   if (GATE_MODEL && !(await gate(user, responses))) return done({ actions: [], note: "gate: quiet" });
 
   // pause_turn means a long server-tool turn paused; send it back to continue.
