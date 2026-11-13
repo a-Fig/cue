@@ -79,7 +79,7 @@ What its announcement says
 | Answering | In writing, in the call's chat | On its shared screen |
 | What it makes | Docs and whiteboards that people on the invite edit during the call; notes and action items | Pages with highlights, slides, diagrams, videos; view only |
 | Joining | Someone adds it, or auto-join from the calendar | A command line (#16) |
-| Telling the room | Appears as a participant and posts a notice in chat; the organizer is told to check everyone is fine with being transcribed | Appears as a participant named Cue; no notice (#15) |
+| Telling the room | Appears as a participant and posts a notice in chat; the organizer is told to check everyone is fine with being transcribed | Appears as a participant named Cue, pins a notice in chat and shows one on its idle screen (#15) |
 | Outside guests | Stays out by default, and leaves if one joins | No rule |
 | Looking things up | Asks for approval before using a connected tool | Searches the public web without asking |
 | After the call | A page per meeting with notes, transcript and what it built; no audio kept | Nothing (#17) |
@@ -147,6 +147,39 @@ Proposed by Drew's agent from replay measurements; merging the PR that adds this
   1.6 s and $0.0019 for Claude, and it got none of them wrong and blocked no tick that needed
   action. Why a reflex: like the intern at the projector, most moments need no thought.
 
+### What the room is told, and where its words go (#15, 2026-11-13)
+
+Tyler's answers (2026-11-13, through eminent-stencil). Cue hears everything said in the call, so
+the people in it are told, and this is where their words go.
+
+| What | Goes to | Kept |
+|---|---|---|
+| The call's audio | Recall.ai, which transcribes it live | The recording and transcript, for 24 hours after the call (`retention` in `scripts/recall.mjs`). Left unset, Recall keeps them forever for accounts made after 2025-06-12 |
+| The last 4 minutes of transcript, on every think call | Anthropic's API (Claude) | Deleted by Anthropic within 30 days by default; longer only if flagged under its Usage Policy or held for legal reasons |
+| The newest 12 lines, on each tick, when `OPENROUTER_API_KEY` is set | OpenRouter's decisions API (Jev, System 1, #50) | Depends on OpenRouter and the model's provider; not yet checked |
+| Search terms Claude picks from what was said | Anthropic's web search and fetch tools | Under Anthropic's API terms, as above |
+| Pages Cue highlights | Fetched by our server (`/api/page`) | Nothing |
+| Our server's log | Stays on whichever machine runs it | Timings and tool names, never transcript text |
+
+Sources, read 2026-11-13: Recall's
+[storage and retention](https://docs.recall.ai/docs/data-retention) and
+[chat messages](https://docs.recall.ai/docs/chat-messages) docs, and Anthropic's
+[API data retention](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-commercial-api-data)
+page.
+
+How the room is told:
+
+- **In the chat.** When the bot joins, it posts a notice to everyone and pins it on Google Meet,
+  so people who join later see it too. This follows Claude Meetings' choice.
+- **On its screen.** The idle screen says an AI is listening, where the words go, and how to stop
+  it. This covers calls where the bot can't post in chat: Recall's docs say a bot can't on Meet
+  when continuous chat is on and the host's organization blocks outside chat.
+- **Stopping it.** Removing Cue from the call stops everything. "Cue, mute" only silences its
+  sounds, and "Cue, hide your screen" only clears its screen; neither stops it listening. There
+  is no "Cue, stop listening" yet.
+- **The hackathon demo.** The join notice is enough; nobody is asked to agree in advance
+  (Tyler, 2026-11-13).
+
 ## What is still open
 
 These decide what Cue becomes. Each has an issue.
@@ -158,7 +191,6 @@ These decide what Cue becomes. Each has an issue.
 | Screen share or camera tile: where does Cue show things? | #12 | yes |
 | How do people talk to Cue, and who may? | #13 | |
 | How do we keep what Cue shows right, and safe for a room? | #14 | |
-| What are people in the call told, and where do their words go? | #15 | |
 | How does someone get Cue into their call? | #16 | |
 | What else should Cue be able to show? | #18 | |
 | What does Cue remember, and what is left after the call? | #17 | |

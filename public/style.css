@@ -122,6 +122,13 @@ html, body {
 }
 .idle-mark .hint { font-size: 24px; color: var(--muted); }
 @keyframes breathe { 50% { opacity: 0.25; } }
+/* The notice that an AI is listening (#15): a quiet card under the hint, on ink. */
+.notice {
+  max-width: 680px; padding: 16px 24px;
+  border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
+  text-align: left; font-size: 19px; line-height: 1.45; color: var(--muted);
+}
+.notice .notice-title { margin-bottom: 4px; color: var(--text); font-size: 21px; font-weight: 700; }
 .ticker {
   position: absolute; left: 72px; right: 72px; bottom: 56px;
   margin: 0; text-align: center; color: var(--muted); font-size: 24px;
