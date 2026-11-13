@@ -82,9 +82,17 @@ What its announcement says
 The announcement doesn't say how fast it answers, what its tile looks like, or when it acts
 without being asked.
 
-Where Cue differs on purpose: Claude Meetings puts its answers in the chat and its work in
+Where Cue differs on purpose (Tyler, 2026-11-13): Claude Meetings is focused on taking notes and
+making plans, which are things to have after the call. Cue is "fully focused on being helpful
+during the meeting, and never speaking." "We want to support humans": the people do the
+talking, deciding and planning, and Cue helps them do it.
+
+That shows in where the work lands. Claude Meetings puts its answers in the chat and its work in
 documents people open elsewhere. Cue puts everything on a screen the whole room is already
-looking at, so nobody leaves the call window. That is the bet. Where Cue has no reason to
+looking at, so nobody leaves the call window.
+
+It also weighs the open questions. What Cue keeps after a call (#17) matters least, and when it
+acts and how fast (#10, #11) matter most. Where Cue has no reason to
 differ (a notice on joining, chat as a second way in, a rule for guests), Claude Meetings'
 choice is the default to start from.
 
