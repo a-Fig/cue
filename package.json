@@ -1,0 +1,20 @@
+{
+  "name": "quiet-intern",
+  "version": "0.1.0",
+  "description": "A silent AI meeting participant that listens and shows visuals: live research, slides, diagrams, captions and pings.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.js",
+    "send-bot": "node --env-file-if-exists=.env scripts/send-bot.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@mozilla/readability": "^0.6.0",
+    "linkedom": "^0.18.15"
+  }
+}

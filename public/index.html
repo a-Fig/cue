@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiet Intern</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Fixed 1280x720 stage: Recall streams the page at that size. -->
+  <main id="stage">
+    <header class="status">
+      <span class="dot" id="dot"></span>
+      <span id="botName">Quiet Intern</span>
+      <span class="sep">·</span>
+      <span id="statusText">listening</span>
+    </header>
+
+    <section class="view idle active" id="view-idle">
+      <div class="idle-mark">
+        <div class="pulse"></div>
+        <p>Listening quietly.</p>
+        <p class="hint">Say "intern, …" to ask for something directly.</p>
+      </div>
+      <p class="ticker" id="ticker"></p>
+    </section>
+
+    <section class="view slide" id="view-slide">
+      <h1 id="slideTitle"></h1>
+      <ul id="slideBullets"></ul>
+    </section>
+
+    <section class="view diagram" id="view-diagram">
+      <h1 id="diagramTitle"></h1>
+      <div class="diagram-box" id="diagramBox"></div>
+    </section>
+
+    <section class="view research" id="view-research">
+      <div class="browser">
+        <div class="chrome">
+          <span class="lights"><i></i><i></i><i></i></span>
+          <span class="urlbar" id="researchUrl"></span>
+        </div>
+        <article class="page" id="researchPage"></article>
+      </div>
+      <aside class="findings">
+        <p class="eyebrow">What I found</p>
+        <h2 id="researchTitle"></h2>
+        <p class="summary" id="researchSummary"></p>
+        <ol id="researchHighlights"></ol>
+        <p class="source" id="researchSource"></p>
+      </aside>
+    </section>
+
+    <footer class="caption" id="caption"></footer>
+  </main>
+
+  <!-- Only shown with ?test=1: type transcript lines without a meeting. -->
+  <form class="testpanel" id="testpanel" hidden>
+    <strong>Test transcript</strong>
+    <input id="testSpeaker" value="Alex" aria-label="Speaker">
+    <textarea id="testText" rows="3" placeholder="Say something… (Enter to send)"></textarea>
+    <div class="row">
+      <button type="submit">Send line</button>
+      <button type="button" id="thinkNow">Think now</button>
+      <button type="button" id="demoScript">Demo script</button>
+    </div>
+    <pre id="testLog"></pre>
+  </form>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
