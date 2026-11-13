@@ -1,0 +1,6 @@
+# Keep LF everywhere: contributors are on Windows and macOS, and CI runs on Linux.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.mp4 binary
