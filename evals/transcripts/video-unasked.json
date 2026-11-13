@@ -1,10 +1,10 @@
 {
-  "about": "Talk about a video that nobody asks to watch, then a direct ask. A video is sound and a full screen in the room, so it plays only on the ask (#14).",
+  "about": "Talk about a video that nobody asks to watch, then a direct ask. A video is sound and a full screen in the room, so it plays only on the ask (#14). The video is a well-known one, so a miss means the gate or prompt, not a hard search.",
   "lines": [
-    { "speaker": "Maya", "text": "Did anyone see the keynote from the Figma conference last week?" },
-    { "speaker": "Leo", "text": "Yeah, the bit about AI layouts was wild." },
+    { "speaker": "Maya", "text": "Did anyone ever watch Apple's original iPhone keynote, the 2007 one?" },
+    { "speaker": "Leo", "text": "Yeah, the bit where he says it's three devices in one is a classic." },
     { "speaker": "Maya", "text": "I think we should take a similar angle for our own launch messaging.", "expect": "quiet" },
     { "speaker": "Leo", "text": "Agreed. Anyway, back to the launch checklist, we still need a date for the beta.", "expect": "quiet" },
-    { "speaker": "Maya", "text": "Cue, can you play a short clip of that keynote so Priya can see what we mean?", "expect": ["play_video"] }
+    { "speaker": "Maya", "text": "Cue, can you play the part of that iPhone keynote where he introduces it, so Priya can see what we mean?", "expect": ["play_video"] }
   ]
 }
