@@ -1,0 +1,8 @@
+{
+  "about": "Planning a team trip. People talk about a landmark nobody can picture; a photo is the right answer, and a follow-up with no new thing stays quiet.",
+  "lines": [
+    { "speaker": "Jo", "text": "For the Lisbon offsite, someone suggested a day trip to Sintra to see the Pena Palace." },
+    { "speaker": "Ravi", "text": "I've never heard of it. What does it even look like?", "expect": ["show_image", "show_research"] },
+    { "speaker": "Jo", "text": "Okay that looks amazing. Let's put it on the list.", "expect": "quiet" }
+  ]
+}
