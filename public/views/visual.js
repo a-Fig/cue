@@ -7,25 +7,37 @@ import { mountView, clip } from "./mount.js";
 import { sanitizeMarkup } from "./sanitize.js";
 
 const CSP = "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data:";
-const FONTS = "https://fonts.googleapis.com/css2?family=Cal+Sans&family=JetBrains+Mono&family=Lato:wght@400;700&display=swap";
+// The page's own font stylesheet (index.html), so the drawing uses whatever faces the screen uses.
+const fonts = () => document.querySelector('link[href^="https://fonts.googleapis.com/css2"]')?.href || "";
 
-// The brand's tokens (brand/tokens.css), so `var(--cue-blue)` works in the model's CSS, and the
-// type defaults readable at Meet-tile size.
-const BASE = `
-:root { --cue-blue: #3168b0; --cue-lime: #ddff8f; --cue-paper: #fefff4; --cue-paper-dim: #eef0e0;
-  --cue-ink: #242515; --cue-ink-muted: #6b6c5c; --cue-line: #e4e6d6;
-  --cue-font-display: "Cal Sans", "Inter", system-ui, sans-serif; --cue-font-body: "Lato", system-ui, sans-serif; }
+// The palette and faces come from the page's live tokens (style.css), so a restyle carries into
+// drawings without touching the prompt. Claude colours shapes and text with these classes instead
+// of hex values: ink, accent, muted, line, paper, hl (the highlighter, a fill behind ink text
+// only), and display for big numbers and headings.
+const TOKENS = ["--cue-blue", "--cue-lime", "--cue-paper", "--cue-paper-dim", "--cue-ink", "--cue-ink-muted", "--cue-line", "--cue-font-display", "--cue-font-body"];
+function base() {
+  const css = getComputedStyle(document.documentElement);
+  // Values are the page's own CSS; drop anything that could close the style element.
+  const vars = TOKENS.map((t) => `${t}: ${css.getPropertyValue(t).replace(/[<>{};\\]/g, "").trim() || "initial"};`).join(" ");
+  return `
+:root { ${vars} }
 html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
 body { color: var(--cue-ink); font: 28px/1.3 var(--cue-font-body); }
 body.svg { display: grid; place-items: center; }
-body.svg > svg { width: 100%; height: 100%; display: block; font-family: var(--cue-font-body); }
+body.svg > svg { width: 100%; height: 100%; display: block; font-family: var(--cue-font-body); fill: var(--cue-ink); }
 body.html { display: flex; flex-direction: column; justify-content: safe center; box-sizing: border-box; padding: 8px; }
-body.html svg { max-width: 100%; height: auto; }`;
+body.html svg { max-width: 100%; height: auto; }
+.ink { fill: var(--cue-ink); color: var(--cue-ink); } .accent { fill: var(--cue-blue); color: var(--cue-blue); }
+.muted { fill: var(--cue-ink-muted); color: var(--cue-ink-muted); } .line { fill: var(--cue-line); }
+.paper { fill: var(--cue-paper-dim); } .hl { fill: var(--cue-lime); }
+.line, .stroke { stroke: var(--cue-line); } .accent-stroke { stroke: var(--cue-blue); fill: none; }
+.display { font-family: var(--cue-font-display); font-weight: 650; letter-spacing: -0.01em; }`;
+}
 
 function srcdoc({ html, kind }) {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
-<link rel="stylesheet" href="${FONTS}"><style>${BASE}</style></head>
+<link rel="stylesheet" href="${fonts()}"><style>${base()}</style></head>
 <body class="${kind}">${html}</body></html>`;
 }
 
