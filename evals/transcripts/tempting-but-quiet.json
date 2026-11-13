@@ -9,7 +9,7 @@
     { "speaker": "Nina", "text": "Ha, nice.", "expect": "quiet" },
     { "speaker": "Omar", "text": "Honestly if this release slips again we should all just move to Mars, lol.", "expect": "quiet" },
     { "speaker": "Nina", "text": "For the team event, maybe bowling? Or an escape room?" },
-    { "speaker": "Leo", "text": "Escape room sounds fun.", "expect": ["quiet", "show_slide"] },
+    { "speaker": "Leo", "text": "Escape room sounds fun.", "expect": "quiet" },
     { "speaker": "Omar", "text": "Okay, real question, what's the current Node LTS version? We need it for the Docker image." },
     { "speaker": "Leo", "text": "Not sure, someone look it up?", "expect": ["show_research"] },
     { "speaker": "Omar", "text": "Okay cool, so we bump the base image to that.", "expect": ["quiet", "add_notes"] },
