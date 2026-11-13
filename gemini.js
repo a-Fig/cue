@@ -5,7 +5,8 @@
 // one request is the whole tick. An error here fails the tick (server.js
 // answers 500); there is no Claude fallback, by Tyler's call (2026-11-13).
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-const THINKING = process.env.GEMINI_THINKING || "low";
+// Upper case, as Google documents thinkingLevel (LOW, HIGH).
+const THINKING = (process.env.GEMINI_THINKING || "low").toUpperCase();
 // A guard against a hung request, not a latency budget.
 const TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 30000);
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
@@ -67,6 +68,8 @@ export async function thinkGemini({ system, user, displayTools }) {
   const input = (u.promptTokenCount || 0) + (u.toolUsePromptTokenCount || 0) - cached;
   const output = (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0);
   const searches = cand.groundingMetadata?.webSearchQueries?.length || 0;
+  // usd is tokens only: Google Search grounding is billed per query on top
+  // (see PRICES), so a research tick costs more than this says.
   const usage = { model: json.modelVersion || MODEL, provider: "gemini", requests: 1, input, cacheRead: cached, cacheWrite: 0,
     output, searches, fetches: 0, usd: (input * p.in + cached * p.in * 0.1 + output * p.out) / 1e6 };
   const note = cand.finishReason && !["STOP", "MAX_TOKENS"].includes(cand.finishReason) && !actions.length ? `gemini: ${cand.finishReason}` : undefined;

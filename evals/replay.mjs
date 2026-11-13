@@ -135,13 +135,15 @@ for (const r of runs) {
   }
 }
 const n = (k) => count[k] || 0;
+// Gemini runs use GEMINI_THINKING, not CLAUDE_EFFORT.
+const effort = process.env.CUE_MODEL_PROVIDER === "gemini" ? `thinking ${process.env.GEMINI_THINKING || "low"}` : process.env.CLAUDE_EFFORT || "low";
 const scored = n("helpful") + n("right-quiet") + n("annoying") + n("missed") + n("wrong");
 const all = runs.flatMap((r) => r.ticks).map((t) => t.ms).sort((a, b) => a - b);
 // A wrong answer on screen is worse than a needless one: it looks like fact.
 const score = n("helpful") + n("right-quiet") - 2 * n("annoying") - n("missed") - 2 * n("wrong");
 console.log(`\nhelpful ${n("helpful")}, right-quiet ${n("right-quiet")}, annoying ${n("annoying")}, missed ${n("missed")}, wrong ${n("wrong")} of ${scored} scored ticks`);
 console.log(`score ${score} (max ${scored}): helpful + right-quiet - 2*annoying - missed - 2*wrong`);
-console.log(`latency median ${all[all.length >> 1]}ms, max ${all.at(-1)}ms; model ${process.env.CUE_MODEL_PROVIDER === "gemini" ? `${process.env.GEMINI_MODEL || "gemini-3.8-flash"} (Gemini)` : process.env.CLAUDE_MODEL || "claude-opus-5-5"}, effort ${process.env.CLAUDE_EFFORT || "low"}`);
+console.log(`latency median ${all[all.length >> 1]}ms, max ${all.at(-1)}ms; model ${process.env.CUE_MODEL_PROVIDER === "gemini" ? `${process.env.GEMINI_MODEL || "gemini-3.8-flash"} (Gemini)` : process.env.CLAUDE_MODEL || "claude-opus-5-5"}, effort ${effort}`);
 
 // Cost and latency by kind of tick, then an hour projected from them. The
 // replays over-sample moments worth acting on, so the hour is built from the
@@ -179,5 +181,5 @@ console.log(`cost this run $${total.toFixed(3)} over ${priced.length} ticks; pro
 mkdirSync(path.join(here, "runs"), { recursive: true });
 const out = path.join(here, "runs", `${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
 writeFileSync(out, JSON.stringify({ model: process.env.CLAUDE_MODEL || "claude-opus-5-5",
-  effort: process.env.CLAUDE_EFFORT || "low", web: process.env.CLAUDE_WEB || "search", score, max: scored, count, kinds, marks, total, hour: { usd: hourUsd, ...mix }, runs }, null, 2));
+  effort, web: process.env.CLAUDE_WEB || "search", score, max: scored, count, kinds, marks, total, hour: { usd: hourUsd, ...mix }, runs }, null, 2));
 console.log(`full run: ${path.relative(process.cwd(), out)}`);
