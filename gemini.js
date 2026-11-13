@@ -2,11 +2,12 @@
 // One generateContent call with Google Search grounding and Cue's display
 // tools as function declarations. Search runs on Google's side inside that
 // call, and display tools are fire-and-forget, so no tool results go back and
-// one request is the whole tick. agent.js falls back to Claude on any error
-// this throws, including the timeout.
+// one request is the whole tick. An error here fails the tick (server.js
+// answers 500); there is no Claude fallback, by Tyler's call (2026-11-13).
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 const THINKING = process.env.GEMINI_THINKING || "low";
-const TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 8000);
+// A guard against a hung request, not a latency budget.
+const TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS || 30000);
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 // Gemini's `parameters` is an OpenAPI subset: no additionalProperties, and a

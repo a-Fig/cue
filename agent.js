@@ -317,16 +317,12 @@ ${lines || "(silence)"}`;
   }
   if (GATE_MODEL && !(await gate(user, responses))) return done({ actions: [], note: "gate: quiet" });
 
-  // CUE_MODEL_PROVIDER=gemini asks Gemini first; any error or a timeout falls
-  // back to Claude for this tick, so a Gemini outage costs latency, not a
-  // missed moment.
+  // CUE_MODEL_PROVIDER=gemini runs the tick on Gemini alone: no Claude
+  // fallback, so an error fails the tick as a Claude error would (Tyler,
+  // 2026-11-13: "if we're using gemini, we're using gemini").
   if (PROVIDER === "gemini") {
-    try {
-      const g = await thinkGemini({ system: SYSTEM, user, displayTools: DISPLAY_TOOLS });
-      return { ...g, ms: Date.now() - started };
-    } catch (e) {
-      console.warn("gemini failed, using claude:", e.name === "TimeoutError" ? "timed out" : e.message);
-    }
+    const g = await thinkGemini({ system: SYSTEM, user, displayTools: DISPLAY_TOOLS });
+    return { ...g, ms: Date.now() - started };
   }
 
   // pause_turn means a long server-tool turn paused; send it back to continue.
