@@ -29,6 +29,12 @@
         <img class="logo" src="logo.svg" alt="cue">
         <p class="listening">Listening</p>
         <p class="hint">Say "Cue, …" to ask for something.</p>
+        <!-- Tells the room what Cue is and where their words go (#15). The join chat message in
+             scripts/recall.mjs says the same; this covers calls where the bot can't post in chat. -->
+        <div class="notice" id="notice">
+          <p class="notice-title">An AI is listening to this call</p>
+          <p>Recall.ai transcribes it, and the last few minutes go to AI models (Anthropic's Claude, and a small model through OpenRouter) to choose what to show here. To stop it, remove Cue from the call.</p>
+        </div>
       </div>
       <p class="ticker" id="ticker"></p>
     </section>
