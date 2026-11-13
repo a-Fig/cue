@@ -19,7 +19,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: transparent;
 body { color: var(--cue-ink); font: 28px/1.3 var(--cue-font-body); }
 body.svg { display: grid; place-items: center; }
 body.svg > svg { width: 100%; height: 100%; display: block; font-family: var(--cue-font-body); }
-body.html { display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; padding: 8px; }`;
+body.html { display: flex; flex-direction: column; justify-content: safe center; box-sizing: border-box; padding: 8px; }
+body.html svg { max-width: 100%; height: auto; }`;
 
 function srcdoc({ html, kind }) {
   return `<!doctype html><html><head><meta charset="utf-8">

@@ -21,6 +21,10 @@ const ALLOWED = new Set([...SVG_TAGS, ...HTML_TAGS]);
 // Attributes that hold a URL. Only a same-document reference ("#grad1") is kept.
 const URL_ATTRS = new Set(["href", "xlink:href", "src", "srcset", "action", "formaction", "background", "poster", "data", "ping"]);
 const MAX_CHARS = 40_000;
+// Each <use> can copy a group that holds more <use>s, so a few kilobytes can ask for millions of
+// copies and stall the bot's 15 fps page. A chart needs a handful.
+const MAX_USES = 40, MAX_ELEMENTS = 3000;
+const plainSize = (v) => (/^\s*\d+(\.\d+)?\s*(px)?\s*$/.test(v || "") ? parseFloat(v) : 0);
 
 // url(#id) stays (gradients, clip paths, markers); any other url(), image-set(), @import and CSS
 // escapes go, since escapes can spell "url" past the pattern. "<" goes too: a style element's text
@@ -43,7 +47,7 @@ function cleanTree(parent) {
     for (const { name, value } of [...el.attributes]) {
       const n = name.toLowerCase();
       const v = value.trim();
-      if (n.startsWith("on") || /javascript:|data:/i.test(v)
+      if (n.startsWith("on") || /javascript:/i.test(v)
           || (URL_ATTRS.has(n) && !v.startsWith("#"))
           || (/url\s*\(/i.test(v) && cleanCss(v) !== v)) {
         el.removeAttribute(name);
@@ -67,15 +71,17 @@ export function sanitizeMarkup(markup, parser) {
   // both. A parsed document is inert: nothing in it loads or runs.
   const doc = parser.parseFromString(`<!doctype html><html><body>${src}</body></html>`, "text/html");
   cleanTree(doc.body);
+  const all = [...doc.body.querySelectorAll("*")];
+  if (all.length > MAX_ELEMENTS) return { html: "", kind: "html" };
+  all.filter((e) => e.localName.toLowerCase() === "use").slice(MAX_USES).forEach((e) => e.remove());
   const kids = [...doc.body.children];
   const kind = kids.length === 1 && kids[0].localName.toLowerCase() === "svg" ? "svg" : "html";
-  if (kind === "svg") {
-    const svg = kids[0];
-    // Without a viewBox the drawing can't scale to the frame; derive one from width and height.
-    const w = parseFloat(svg.getAttribute("width")), h = parseFloat(svg.getAttribute("height"));
+  // Without a viewBox a drawing can't scale to the frame; derive one from a plain width and height
+  // ("1136", "470px", not "100%"). A lone svg then fills the frame; inside HTML it shrinks to fit.
+  for (const svg of [...doc.body.querySelectorAll("svg")].filter((e) => !e.parentElement?.closest("svg"))) {
+    const w = plainSize(svg.getAttribute("width")), h = plainSize(svg.getAttribute("height"));
     if (!svg.getAttribute("viewBox") && w > 0 && h > 0) svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
+    if (kind === "svg") { svg.removeAttribute("width"); svg.removeAttribute("height"); }
   }
   const html = doc.body.innerHTML.trim();
   const drawn = doc.body.textContent.trim() || [...doc.body.querySelectorAll("*")].some((e) => e.localName.toLowerCase() !== "style");

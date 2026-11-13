@@ -29,6 +29,10 @@ const cases = [
     (h) => !/e\.com|<meta|<base|<link|<form|<input/i.test(h) && h.includes("ok")],
   ["drops data: urls", `<div style="background:url(data:image/svg+xml,x)">x</div><svg viewBox="0 0 1 1"><use href="data:image/svg+xml,x"/></svg>`, (h) => !/data:/i.test(h)],
   ["gives a viewBox from width and height", `<svg width="400" height="200"><rect width="1" height="1"/></svg>`, (h) => h.includes('viewBox="0 0 400 200"') && !/width="400"/.test(h)],
+  ["no viewBox from percentages", `<svg width="100%" height="100%"><rect width="1" height="1"/></svg>`, (h) => !/viewBox/.test(h)],
+  ["sizes an svg inside HTML too", `<style>.a{}</style><svg width="1136" height="470px"><rect width="1" height="1"/></svg>`, (h) => h.includes('viewBox="0 0 1136 470"')],
+  ["keeps harmless text that says data:", `<svg viewBox="0 0 1 1" aria-label="Revenue data: Q3"><rect width="1" height="1"/></svg>`, (h) => h.includes("Revenue data")],
+  ["caps <use> copies", `<svg viewBox="0 0 1 1"><g id="a"><rect width="1" height="1"/></g>${'<use href="#a"/>'.repeat(100)}</svg>`, (h) => (h.match(/<use/g) || []).length === 40],
   ["nothing drawable is empty", `<script>x</script>`, (h) => h === ""],
 ];
 
