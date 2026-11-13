@@ -123,13 +123,18 @@ const VIDEO_STOP = /\bstop (the |that |this )?(video|clip|it)\b|\bstop playing\b
 const COMMANDS = [
   [/\bunmute\b/, () => setAudio(false)],
   [/\b(mute|be quiet|shush|no (more )?(sounds?|noise))\b/, () => setAudio(true)],
-  [VIDEO_STOP, () => videoUp() && videoCommand(() => stopVideo(true))],
-  [VIDEO_PAUSE, () => videoUp() && videoCommand(() => pauseVideo(true))],
-  [VIDEO_RESUME, () => videoUp() && videoCommand(() => pauseVideo(false))],
+  [VIDEO_STOP, (rest) => videoUp() && !negated(VIDEO_STOP, rest) && videoCommand(() => stopVideo(true))],
+  [VIDEO_PAUSE, (rest) => videoUp() && !negated(VIDEO_PAUSE, rest) && videoCommand(() => pauseVideo(true))],
+  [VIDEO_RESUME, (rest) => videoUp() && !negated(VIDEO_RESUME, rest) && videoCommand(() => pauseVideo(false))],
   [/\b(hide|close|stop sharing|turn off) (your |the )?screen\b|\bget off (the )?screen\b/, () => setScreen(false)],
   [/\b(show|share|bring back|turn on) (your |the )?screen\b/, () => setScreen(true)],
 ];
 const videoUp = () => Boolean($("videoBox").firstChild);
+// "Cue, don't stop it" or "do not pause" must not do the opposite of what was said: a video
+// command right after a negation (up to two words before it) is left alone, and Claude sees the line.
+// "No, keep going" still resumes, since the comma ends the negation.
+const NEGATION = /\b(?:don['’]?t|do not|no|never)\s+(?:[\w'’]+\s+){0,2}$/;
+const negated = (re, rest) => { const m = re.exec(rest); return Boolean(m) && NEGATION.test(rest.slice(0, m.index)); };
 function videoCommand(run) { state.videoCmdAt = Date.now(); run(); }
 function localCommand(text) {
   const m = WAKE.exec(text);
@@ -137,7 +142,7 @@ function localCommand(text) {
   const rest = text.slice(m.index + m[0].length).toLowerCase().trim();
   // Run every command in the line, so "unmute and show your screen" does both.
   const hits = COMMANDS.filter(([re]) => re.test(rest));
-  hits.forEach(([, run]) => run());
+  hits.forEach(([, run]) => run(rest));
   if (hits.length) log("local command:", rest);
 }
 
@@ -206,9 +211,10 @@ async function maybeThink(force = false) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || r.status);
     log("actions:", data.actions.map((a) => a.tool).join(", ") || "quiet");
-    // A spoken "Cue, pause" since the last look already ran in the page; this call saw the same
-    // line, so its own video moves (a stop, a replay of the same video) would undo or repeat it.
-    const handled = state.videoCmdAt > lastLook;
+    // A spoken "Cue, pause" since the last look, and before this call started, already ran in the
+    // page; this call saw the same line, so its own video moves (a stop, a replay of the same video)
+    // would undo or repeat it. A command spoken while the call ran is on a line it never saw.
+    const handled = state.videoCmdAt > lastLook && state.videoCmdAt <= now;
     for (const a of data.actions) {
       if (handled && isVideoRepeat(a)) { log("skipped", a.tool, "(done in the page)"); continue; }
       await apply(a);

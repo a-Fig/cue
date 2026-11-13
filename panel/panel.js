@@ -64,6 +64,7 @@ const money = (ms, rate, models = 0) => `$${((ms / 3_600_000) * rate + models).t
 function describe(a) {
   const i = a.input || {};
   if (a.tool === "set_audio") return ["bell", i.muted ? "Muted itself" : "Unmuted itself", ""];
+  if (a.tool === "pause_video") return ["play", i.paused ? "Paused the video" : "Resumed the video", ""];
   if (a.tool === "set_screen") return ["slide", i.visible ? "Showed its screen" : "Hid its screen", ""];
   const [ic, verb] = TOOL[a.tool] || ["zap", a.tool.replaceAll("_", " ")];
   const what = i.text ? `“${i.text}”` : i.title || i.url || i.sound || "";
