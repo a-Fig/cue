@@ -21,7 +21,9 @@ export async function showImage(input, view) {
   }
   const img = new Image();
   img.src = `${found.src}&${tok}`;
-  try { await img.decode(); } catch { return console.log("[cue] show_image: the picture didn't load"); }
+  // The server already holds the bytes, so this is quick; the timeout only guards a stuck decode.
+  const ok = await Promise.race([img.decode().then(() => true, () => false), new Promise((r) => setTimeout(r, 5000, false))]);
+  if (!ok) return console.log("[cue] show_image: the picture didn't load");
   if (mine !== gen) return;
 
   const el = await mountView("image", `<h1></h1><div class="image-box"></div><p class="credit"></p>`);
