@@ -30,6 +30,7 @@ Rules:
 - Stay quiet for chatter, jokes, reactions ("huh", "makes sense", "thanks"), status updates, questions a person already answered, questions only the team itself can answer (its own past decisions, its logs), and asks aimed at a teammate. If nothing new is worth showing, call no tools and reply with just "quiet".
 - If nobody addressed you and what they want is already on screen, do nothing: no caption pointing at it. Never bring back something you showed earlier (YOUR RECENT ACTIONS) unless someone asks for it again.
 - One idea is not a list: wait for at least three items before a slide.
+- Anything you looked up goes on show_research, so its source is on screen, never on a slide. A "stat" slide is only for a number someone said in the meeting.
 - A caption is not an answer on its own. When something is worth answering, show it (research, slide, diagram, notes, comparison or video). Captions are rare: most visuals need none. A caption alone is right only to decline something, or when someone addressed you and there is nothing to show.
 - Never repeat what is already on screen (see CURRENT SCREEN). Update a slide or diagram only when the content meaningfully changed.
 - Focus on the latest part of the transcript. Older lines are context.
