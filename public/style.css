@@ -3,8 +3,12 @@
   --panel: #161b22;
   --panel-2: #1d232c;
   --line: #2a313c;
-  --text: #e8ecf1;
+  --text: #f2f5f8;
+  --text-2: #c3cbd6;   /* secondary text that still reads in a shrunk Meet tile */
   --muted: #8b95a3;
+  --paper: #fbfaf6;
+  --paper-text: #1d1d1b;
+  --paper-muted: #6f6e68;
   --accent: #7cc4ff;
   --mark: #ffd75e;
   --mark-text: #1a1400;
@@ -44,15 +48,15 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px 6px 12px;
+  padding: 8px 18px 8px 14px;
   border-radius: 999px;
   background: rgba(22, 27, 34, 0.85);
   border: 1px solid var(--line);
-  font-size: 15px;
-  color: var(--muted);
+  font-size: 20px;
+  color: var(--text-2);
 }
 .status #botName { color: var(--text); font-weight: 600; }
-.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ok); }
 .dot.busy { background: var(--busy); animation: blink 0.9s infinite alternate; }
 .dot.off { background: #c95a5a; }
 @keyframes blink { to { opacity: 0.3; } }
@@ -120,43 +124,65 @@ html, body {
 }
 .diagram-box svg { max-width: 100%; max-height: 480px; height: auto; }
 
-/* Research */
-.research { display: grid; grid-template-columns: 1fr 380px; gap: 24px; padding-top: 70px; }
-.browser {
-  display: flex; flex-direction: column; min-height: 0;
-  border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #fbfbf9;
+/* Research: the answer, sized for the back of the room (Google's answer box, keynote
+   slides), and one excerpt from the page as evidence (Perplexity's sources, a featured
+   snippet). The screen is seen shrunk into a Meet tile, so nothing here is under 22px. */
+.research {
+  display: grid; grid-template-columns: 1fr 520px; gap: 56px; align-items: center;
+  padding: 84px 72px 136px; /* the bottom stays clear for the caption bar */
 }
-.chrome { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #e6e6e3; }
-.lights i { display: inline-block; width: 11px; height: 11px; margin-right: 6px; border-radius: 50%; background: #c9c9c5; }
-.urlbar {
-  flex: 1; padding: 6px 14px; border-radius: 8px; background: #fff; color: #444;
-  font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+/* No verified quote (the site blocked us, or the quotes were not on the page): the answer
+   alone, bigger, so the screen looks meant rather than half-empty. */
+.research.no-excerpt { grid-template-columns: 1fr; padding-left: 96px; }
+.research.no-excerpt .headline { font-size: 132px; }
+.research.no-excerpt .headline.long { font-size: 84px; }
+.research.no-excerpt .context { max-width: 36ch; font-size: 34px; }
+.research.no-excerpt .excerpt { display: none; }
+.answer { min-width: 0; }
+.kicker {
+  margin: 0 0 14px; color: var(--accent); font-size: 26px; font-weight: 600; letter-spacing: 0.01em;
 }
-.page {
-  flex: 1; overflow: hidden; padding: 28px 40px; color: #222;
-  font: 19px/1.6 Georgia, "Times New Roman", serif;
+.headline {
+  margin: 0 0 22px; font-size: 96px; line-height: 1.02; font-weight: 750; letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
 }
-.page h1 { font: 700 30px/1.25 var(--font); margin: 0 0 18px; color: #111; }
-.page p { margin: 0 0 16px; }
-.page mark {
-  background: var(--mark); color: var(--mark-text); padding: 1px 2px; border-radius: 3px;
-  box-shadow: 0 0 0 0 rgba(255, 196, 0, 0.7);
+.headline.long { font-size: 64px; line-height: 1.08; letter-spacing: -0.025em; }
+.context {
+  margin: 0 0 30px; max-width: 30ch; font-size: 30px; line-height: 1.35; color: var(--text-2);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-.page mark.focus { animation: glow 1.4s ease-out 2; }
-@keyframes glow { 0% { box-shadow: 0 0 0 6px rgba(255, 196, 0, 0.6); } 100% { box-shadow: 0 0 0 0 rgba(255, 196, 0, 0); } }
-.page .fallback { color: #666; font-style: italic; }
+.source-chip {
+  display: inline-flex; align-items: center; gap: 12px; margin: 0;
+  padding: 10px 18px 10px 12px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid var(--line); font-size: 24px; color: var(--text-2);
+}
+.source-chip img { width: 28px; height: 28px; border-radius: 6px; background: #fff; }
+.source-chip img[hidden] { display: none; }
 
-.findings {
-  display: flex; flex-direction: column; min-height: 0;
-  padding: 22px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+.excerpt {
+  margin: 0; padding: 30px 36px 24px; max-height: 100%; overflow: hidden; border-radius: 20px;
+  background: var(--paper); color: var(--paper-text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.35s ease;
 }
-.eyebrow { margin: 0 0 6px; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
-.findings h2 { margin: 0 0 10px; font-size: 24px; line-height: 1.25; }
-.summary { margin: 0 0 14px; font-size: 17px; line-height: 1.45; color: var(--text); }
-.findings ol { margin: 0; padding-left: 20px; overflow: hidden; flex: 1; }
-.findings li { margin-bottom: 10px; font-size: 14.5px; line-height: 1.4; color: var(--muted); }
-.findings li.focus { color: var(--text); }
-.source { margin: 8px 0 0; font-size: 13px; color: var(--muted); word-break: break-all; }
+.excerpt.loading blockquote { color: var(--paper-muted); font-style: italic; }
+.excerpt figcaption {
+  margin: 0 0 16px; font-size: 22px; font-weight: 600; color: var(--paper-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.excerpt blockquote {
+  margin: 0; font: 30px/1.42 Georgia, "Times New Roman", serif;
+  display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden;
+}
+.excerpt mark {
+  background: var(--mark); color: var(--mark-text); padding: 0 4px; border-radius: 4px;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  animation: markin 0.9s ease-out both;
+}
+@keyframes markin { from { background: transparent; } }
+.dots { display: flex; gap: 8px; margin: 18px 0 0; min-height: 10px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: #cfcfc9; }
+.dots i.on { background: var(--paper-text); }
 
 /* Video */
 .video h1 { margin: 0 0 18px; font-size: 32px; letter-spacing: -0.01em; }
@@ -181,19 +207,17 @@ html, body {
 .cover p { margin: 0 0 8px; }
 .cover .hint { font-size: 16px; opacity: 0.7; }
 
-/* Caption */
+/* Caption: a live-caption bar (Meet, YouTube): high contrast, low on the screen, gone in seconds. */
 .caption {
-  position: absolute; left: 50%; bottom: 26px; z-index: 6;
-  max-width: 1040px; padding: 14px 26px;
-  transform: translate(-50%, 20px);
-  border-radius: 14px;
-  background: rgba(10, 12, 16, 0.92);
-  border: 1px solid var(--line);
-  font-size: 26px; line-height: 1.3; text-align: center;
-  opacity: 0; transition: opacity 0.35s ease, transform 0.35s ease;
+  position: absolute; left: 50%; bottom: 28px; z-index: 6;
+  max-width: 1100px; padding: 14px 30px;
+  transform: translate(-50%, 16px);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.88);
+  font-size: 30px; font-weight: 500; line-height: 1.3; text-align: center;
+  opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .caption.show { opacity: 1; transform: translate(-50%, 0); }
-.caption::before { content: "💬 "; }
 
 /* Test panel (outside the stage, only for local testing) */
 .testpanel {

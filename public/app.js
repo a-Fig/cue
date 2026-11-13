@@ -51,10 +51,13 @@ function log(...args) {
 }
 
 // ---------- transcript in ----------
-// How people address it: "Cue, …" at the start of a sentence, or "hey/ok Cue". Speech-to-text
-// may write "Q" or "queue"; those need a comma after them ("Q, …") unless "hey"/"ok" comes first,
-// so "Queue is backed up" or "Q and A" don't wake it. The old "intern, …" works anywhere.
-const WAKE = /(?:(?:^|[.!?]\s+)(?:cue\b|(?:queue|q)(?=,))|\b(?:hey|ok|okay)[\s,]+(?:cue|queue|q)\b|\bintern\b)[\s,.!:-]*/i;
+// How people address it: "Cue …", which speech-to-text may write "Q" or "queue", at the start of a
+// line or sentence, after a comma, or after a filler like "so", "hey" or "okay". Recall's transcript
+// can drop punctuation: the first real call wrote "so q find me the population of japan" (#31).
+// Not a wake: "Q3", "the queue is long" (not at a start), "Queue is backed up", "Q and A",
+// "Q's revenue". A false wake costs one think call, cheaper than a missed request. The old
+// "intern, …" works anywhere.
+const WAKE = /(?:(?:^|[.!?,;]\s*|\b(?:so|and|hey|ok|okay|um|uh|yo|alright)[\s,]+)(?:cue|queue(?!\s+(?:is|was|are)\b)|q)\b(?!['’]s|\s+(?:and|&|a)\b)|\bintern\b)[\s,.!:-]*/i;
 function addLine(speaker, text) {
   text = (text || "").trim();
   if (!text) return;
@@ -291,99 +294,109 @@ async function showDiagram({ title, mermaid }) {
   }
 }
 
-// --- research: open the page, highlight the quotes, walk through them ---
+// --- research: the answer first, then one excerpt from the page as evidence ---
+// The model's title is usually "<what>: <answer>" ("Germany population: ~83.5 million"), so the
+// part after the colon becomes the big headline and the part before it the kicker.
 const norm = (s) => s.replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").toLowerCase();
 const squash = (s) => s.replace(/\s+/g, " ").trim();
+const EXCERPT_CHARS = 170; // context kept on each side of the quote
 
-function markParagraph(text, quotes) {
-  // Find each quote (or its first 60 chars) in this paragraph. Replacements in
-  // norm() are 1:1, so indexes in the normalized text match the original.
-  const hay = norm(text);
-  const ranges = [];
-  quotes.forEach((q, qi) => {
+function splitTitle(title) {
+  const i = title.indexOf(":");
+  if (i > 0 && i < title.length - 1) return { kicker: title.slice(0, i).trim(), headline: title.slice(i + 1).trim() };
+  return { kicker: "", headline: title.trim() };
+}
+
+function hostOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; }
+}
+
+// A quote counts only where all of it appears on the page, after whitespace and quote-mark
+// normalisation (norm() replaces 1:1, so its indexes match the squashed text). Quotes the page
+// doesn't contain are dropped, never shown as if sourced (#14).
+function findQuotes(paragraphs, quotes) {
+  const found = [];
+  for (const q of quotes) {
     const needle = norm(squash(q));
-    let i = hay.indexOf(needle);
-    let len = needle.length;
-    if (i < 0 && needle.length > 60) {
-      i = hay.indexOf(needle.slice(0, 60));
-      len = Math.min(needle.length, text.length - i);
+    if (needle.length < 12) continue;
+    for (const raw of paragraphs) {
+      const text = squash(raw);
+      const i = norm(text).indexOf(needle);
+      if (i >= 0) { found.push({ text, start: i, end: i + needle.length }); break; }
     }
-    if (i >= 0) ranges.push({ start: i, end: i + len, qi });
-  });
-  if (!ranges.length) return null;
-  ranges.sort((a, b) => a.start - b.start);
-  const frag = document.createDocumentFragment();
-  let pos = 0;
-  for (const r of ranges) {
-    if (r.start < pos) continue;
-    frag.append(text.slice(pos, r.start));
-    const m = document.createElement("mark");
-    m.dataset.q = String(r.qi);
-    m.textContent = text.slice(r.start, r.end);
-    frag.append(m);
-    pos = r.end;
   }
-  frag.append(text.slice(pos));
+  return found;
+}
+
+// The paragraph around one quote, cut at word boundaries, with the quote marked.
+function excerptNode({ text, start, end }) {
+  let from = Math.max(0, start - EXCERPT_CHARS);
+  let to = Math.min(text.length, end + EXCERPT_CHARS);
+  if (from > 0) { const sp = text.indexOf(" ", from); if (sp >= 0 && sp < start) from = sp + 1; }
+  if (to < text.length) { const sp = text.lastIndexOf(" ", to); if (sp > end) to = sp; }
+  const frag = document.createDocumentFragment();
+  frag.append((from > 0 ? "…" : "") + text.slice(from, start));
+  frag.append(Object.assign(document.createElement("mark"), { textContent: text.slice(start, end) }));
+  frag.append(text.slice(end, to) + (to < text.length ? "…" : ""));
   return frag;
 }
 
 let walkTimer;
-async function showResearch({ url, title, summary, highlights }) {
+let researchGen = 0; // a newer showResearch wins over an older one still fetching its page
+async function showResearch({ url, title, summary, highlights = [] }) {
   clearInterval(walkTimer);
-  $("researchUrl").textContent = url;
-  $("researchTitle").textContent = title;
+  const gen = ++researchGen;
+  const { kicker, headline } = splitTitle(title);
+  const host = hostOf(url);
+  const view = $("view-research");
+  $("researchKicker").textContent = kicker;
+  $("researchKicker").hidden = !kicker;
+  $("researchHeadline").textContent = headline;
+  $("researchHeadline").classList.toggle("long", headline.length > 22);
   $("researchSummary").textContent = summary;
-  $("researchSource").textContent = url;
-  $("researchHighlights").replaceChildren(...highlights.map((h) => {
-    const li = document.createElement("li");
-    li.textContent = `“${h}”`;
-    return li;
-  }));
-  const pageEl = $("researchPage");
-  pageEl.replaceChildren(Object.assign(document.createElement("p"), { className: "fallback", textContent: "Opening page…" }));
+  $("researchSource").textContent = host;
+  const icon = $("researchIcon");
+  icon.hidden = false;
+  icon.onerror = () => { icon.hidden = true; };
+  icon.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`;
+
+  const excerpt = $("researchExcerpt");
+  view.classList.remove("no-excerpt");
+  excerpt.classList.add("loading");
+  $("researchPageTitle").textContent = host;
+  $("researchQuote").textContent = `Reading ${host}…`;
+  $("researchDots").replaceChildren();
   showView("research");
   state.screen = { mode: "research", title, url };
   remember(`research: ${title}`);
 
+  let found = [];
+  let pageTitle = host;
   try {
     const r = await fetch(`/api/page?token=${encodeURIComponent(TOKEN)}&url=${encodeURIComponent(url)}`);
     const page = await r.json();
     if (!r.ok) throw new Error(page.error || r.status);
-    const h1 = document.createElement("h1");
-    h1.textContent = page.title;
-    const nodes = [h1];
-    for (const para of page.paragraphs) {
-      const p = document.createElement("p");
-      const marked = markParagraph(para, highlights);
-      marked ? p.append(marked) : (p.textContent = para);
-      nodes.push(p);
-    }
-    pageEl.replaceChildren(...nodes);
+    pageTitle = page.title || host;
+    found = findQuotes(page.paragraphs, highlights);
   } catch (err) {
     log("page fetch failed:", err.message);
-    pageEl.replaceChildren(Object.assign(document.createElement("p"), {
-      className: "fallback",
-      textContent: "This site wouldn't open here, so the quotes are on the right.",
-    }));
-    return;
   }
+  if (gen !== researchGen || state.screen.mode !== "research") return; // the screen moved on meanwhile
+  log(`quotes found on the page: ${found.length} of ${highlights.length}`);
+  excerpt.classList.remove("loading");
+  if (!found.length) return view.classList.add("no-excerpt");
 
-  // Scroll to each highlight in turn so Cue walks through what it found.
-  const marks = [...pageEl.querySelectorAll("mark")];
-  if (!marks.length) return;
-  const items = [...$("researchHighlights").children];
+  $("researchPageTitle").textContent = pageTitle;
+  const dots = found.map(() => document.createElement("i"));
+  $("researchDots").replaceChildren(...(found.length > 1 ? dots : []));
   let k = 0;
-  const focus = () => {
-    const m = marks[k % marks.length];
-    marks.forEach((x) => x.classList.remove("focus"));
-    items.forEach((x) => x.classList.remove("focus"));
-    pageEl.scrollTo({ top: Math.max(0, m.offsetTop - pageEl.clientHeight / 3), behavior: "smooth" });
-    m.classList.add("focus");
-    items[Number(m.dataset.q)]?.classList.add("focus");
+  const show = () => {
+    $("researchQuote").replaceChildren(excerptNode(found[k % found.length]));
+    dots.forEach((d, i) => d.classList.toggle("on", i === k % found.length));
     k++;
   };
-  focus();
-  if (marks.length > 1) walkTimer = setInterval(focus, 6000);
+  show();
+  if (found.length > 1) walkTimer = setInterval(show, 7000);
 }
 
 let captionTimer;
