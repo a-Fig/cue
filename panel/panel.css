@@ -1,0 +1,152 @@
+/* The brand kit's tokens (brand/tokens.css, 2026-11-13), on paper: the panel is a tool people
+   read, and ink is kept for Cue's own screen while it listens. Blue is Cue's voice (status,
+   links), lime marks what Cue did. The two status colours the kit lacks (lobby, failure) are
+   picked to pass AA on paper. */
+:root {
+  --cue-blue: #3168b0;
+  --cue-lime: #ddff8f;
+  --cue-paper: #fefff4;
+  --cue-paper-dim: #eef0e0;
+  --cue-ink: #242515;
+  --cue-ink-muted: #6b6c5c;
+  --cue-line: #e4e6d6;
+  --cue-font-display: "Cal Sans", "Inter", system-ui, sans-serif;
+  --cue-font-body: "Lato", system-ui, sans-serif;
+  --cue-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --wait: #8a5a00;
+  --bad: #b3261e;
+  --bad-soft: #fbe9e7;
+  --wait-soft: #fdf3dc;
+  --faint: #9a9b8a;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--cue-paper-dim); color: var(--cue-ink); font: 15px/1.5 var(--cue-font-body); }
+.muted { color: var(--cue-ink-muted); }
+[hidden] { display: none !important; }
+time, .mono { font-family: var(--cue-font-mono); font-size: 12px; }
+
+.top {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 24px; border-bottom: 1px solid var(--cue-line); background: var(--cue-paper);
+}
+.top .logo { height: 26px; width: auto; display: block; }
+.top .what { color: var(--cue-ink-muted); }
+.spacer { flex: 1; }
+.conn { color: var(--bad); font-size: 13px; }
+
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--faint); flex: none; }
+.dot.ok { background: var(--cue-blue); }
+.dot.busy { background: var(--wait); animation: blink 0.9s infinite alternate; }
+.dot.bad { background: var(--bad); }
+@keyframes blink { to { opacity: 0.3; } }
+
+.problems { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+.problem { margin-top: 14px; padding: 10px 14px; border-radius: 12px; border: 1px solid; }
+.problem.error { border-color: #e7b4ae; background: var(--bad-soft); color: #7a1a14; }
+.problem.warn { border-color: #ecd59c; background: var(--wait-soft); color: #5c3c00; }
+
+/* The composer: centred and alone before a call, a slim bar between calls. */
+.hero { max-width: 660px; margin: 13vh auto 0; padding: 0 24px; text-align: center; }
+.hero .mark { height: 56px; margin-bottom: 18px; }
+.hero h1 { font-size: 40px; margin-bottom: 8px; }
+.hero .lede { color: var(--cue-ink-muted); margin: 0 0 24px; font-size: 16px; }
+.hero .fine { color: var(--cue-ink-muted); font-size: 13px; margin: 14px 0 0; }
+.hero.compact { max-width: 1240px; margin: 18px auto 0; text-align: left; }
+.hero.compact h1 { font-family: var(--cue-font-body); font-size: 14px; font-weight: 700; color: var(--cue-ink-muted); margin-bottom: 8px; }
+.hero.compact .lede, .hero.compact .fine, .hero.compact .mark { display: none; }
+
+form { display: flex; gap: 10px; flex-wrap: wrap; }
+input {
+  flex: 1 1 260px; min-width: 0; padding: 12px 16px; border-radius: var(--cue-radius-pill, 999px);
+  border: 1px solid var(--cue-line); background: var(--cue-paper); color: var(--cue-ink); font: 14px var(--cue-font-mono);
+}
+input:focus { outline: 2px solid var(--cue-blue); outline-offset: -1px; }
+button {
+  padding: 12px 22px; border-radius: 999px; border: 1px solid transparent; cursor: pointer;
+  background: var(--cue-ink); color: var(--cue-paper); font: 700 15px var(--cue-font-body); white-space: nowrap;
+}
+button:hover:not(:disabled) { background: #3a3b27; }
+button:disabled { opacity: 0.45; cursor: default; }
+button.danger { background: var(--bad); }
+button.danger:hover:not(:disabled) { background: #951f18; }
+
+.grid {
+  max-width: 1240px; margin: 0 auto; padding: 18px 24px 40px;
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 18px; align-items: start;
+}
+@media (max-width: 880px) {
+  .grid { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .top, .problems, .hero { padding-left: 16px; padding-right: 16px; }
+  .hero { margin-top: 8vh; }
+  .hero h1 { font-size: 32px; }
+}
+.col { display: grid; gap: 18px; min-width: 0; }
+
+.card { background: var(--cue-paper); border: 1px solid var(--cue-line); border-radius: 20px; padding: 20px 22px; min-width: 0; }
+h1, h2, h3 { margin: 0 0 12px; font-weight: 400; }
+h1 { font-family: var(--cue-font-display); font-size: 26px; line-height: 1.15; }
+h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cue-ink-muted); }
+.eyebrow { margin: 0 0 6px; color: var(--cue-ink-muted); font: 12px var(--cue-font-mono); overflow-wrap: anywhere; }
+
+.headline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.headline h1 { margin: 0; min-width: 0; }
+@media (max-width: 520px) { .headline { flex-wrap: wrap; } }
+.status .detail { margin: 6px 0 0; color: var(--cue-ink-muted); }
+.status.lobby h1 { color: var(--wait); }
+.status.in_call h1 { color: var(--cue-blue); }
+.status.error h1 { color: var(--bad); }
+.status.error .detail { color: #7a1a14; }
+
+/* Phases as a stepper: done, current, still to come. */
+.stepper { list-style: none; display: flex; margin: 18px 0 0; padding: 0; }
+.stepper li { flex: 1; position: relative; padding-top: 18px; font-size: 13px; color: var(--faint); min-width: 0; }
+.stepper li::before { content: ""; position: absolute; top: 5px; left: 0; right: 0; height: 2px; background: var(--cue-line); }
+.stepper li::after { content: ""; position: absolute; top: 0; left: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--cue-paper); border: 2px solid var(--cue-line); box-sizing: border-box; }
+.stepper li.done { color: var(--cue-ink-muted); }
+.stepper li.done::before, .stepper li.done::after { background: var(--cue-blue); border-color: var(--cue-blue); }
+.stepper li.now { color: var(--cue-ink); font-weight: 700; }
+.stepper li.now::after { background: var(--wait); border-color: var(--wait); }
+.status.in_call .stepper li.now::after, .status.left .stepper li.now::after { background: var(--cue-blue); border-color: var(--cue-blue); }
+.stepper li.failed { color: var(--bad); font-weight: 700; }
+.stepper li.failed::after { background: var(--bad); border-color: var(--bad); }
+.stepper time { display: block; font-weight: 400; color: var(--faint); }
+
+.meters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.meters > div { background: var(--cue-paper-dim); border-radius: 14px; padding: 10px 14px; min-width: 0; }
+.meters .label { display: block; color: var(--cue-ink-muted); font-size: 12px; }
+.meters .value { font: 700 22px var(--cue-font-body); font-variant-numeric: tabular-nums; }
+
+.log { margin-top: 14px; }
+.log summary { cursor: pointer; color: var(--cue-ink-muted); font-size: 13px; }
+.steps { margin: 8px 0 0; padding-left: 0; list-style: none; color: var(--cue-ink-muted); font-size: 13px; }
+.steps li { display: flex; gap: 10px; }
+.steps li + li { margin-top: 3px; }
+.steps time { color: var(--faint); flex: none; padding-top: 1px; }
+
+/* A small stand-in for Cue's screen: ink while it listens, paper when it shows something. */
+.screen { background: var(--cue-paper); border: 1px solid var(--cue-line); border-radius: 14px; padding: 16px 18px; aspect-ratio: 16 / 9; overflow: hidden; }
+.screen p { margin: 0; }
+.screen .mode { font: 11px var(--cue-font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--cue-blue); margin-bottom: 6px; }
+.screen .title { font: 22px/1.2 var(--cue-font-display); }
+.screen .url { color: var(--cue-ink-muted); font: 12px var(--cue-font-mono); overflow-wrap: anywhere; margin-top: 6px; }
+.screen .bullets { margin: 8px 0 0; padding-left: 20px; }
+.screen .flags { margin-top: 10px; color: var(--wait); font-size: 13px; }
+.screen.listening { background: var(--cue-ink); border-color: var(--cue-ink); display: grid; place-content: center; text-align: center; color: var(--cue-paper); }
+.screen.listening img { height: 34px; margin: 0 auto 10px; display: block; }
+.screen.listening p { color: #c9cab8; font-size: 14px; }
+.screen.listening .flags { color: var(--cue-lime); }
+
+.feed { list-style: none; margin: 0; padding: 0; max-height: calc(100vh - 190px); min-height: 220px; overflow-y: auto; display: grid; align-content: start; gap: 4px; }
+.feed li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 7px 12px 7px 8px; border-radius: 12px; overflow-wrap: anywhere; }
+.feed time { color: var(--faint); padding-top: 3px; }
+.feed .who { font-weight: 700; margin-right: 6px; }
+.feed li.quiet { color: var(--cue-ink-muted); font-size: 13px; padding-top: 1px; padding-bottom: 1px; }
+.feed li.did { background: var(--cue-lime); }
+.feed li.did time { color: #5c6a3a; }
+.feed li.failed { background: var(--bad-soft); color: #7a1a14; }
+.feed .tool { font-weight: 700; }
+.feed .ms { color: var(--cue-ink-muted); font: 11px var(--cue-font-mono); margin-left: 8px; }
+.feed li.empty { display: block; padding: 28px 12px; text-align: center; color: var(--cue-ink-muted); }
+.feed-end { margin: 12px 0 0; color: var(--cue-ink-muted); font-size: 13px; text-align: center; }

@@ -23,6 +23,8 @@ stays short.
 | `agent.js` | The Claude call: system prompt, display tools, web search/fetch. Stateless, one call per transcript "tick" |
 | `public/` | The page the bot shows (`app.js`: transcript in, actions out). Plain ES modules, no build step |
 | `scripts/cue.mjs` | `npm run cue`: starts the server and a tunnel if needed, sends the bot, takes it out again |
+| `scripts/launch.mjs` | The start-up steps `cue.mjs` and `panel.mjs` share: server, tunnel, bot status |
+| `scripts/panel.mjs`, `panel/` | `npm run panel`: the same from a page on 127.0.0.1 (#32), with a live feed from a local pass-through in front of `server.js`. Never public, never inside `server.js` |
 | `scripts/send-bot.mjs`, `scripts/recall.mjs` | Sends the bot alone; Recall's bot API (create, status, leave) |
 | `scripts/check.mjs` | The CI check: every JS file parses, the server boots and guards its API |
 | `docs/VISION.md` | What Cue is for, what it holds to, and the open questions with their issues. A settled question's answer and reason go there, dated. It also compares Cue with Claude Meetings, the reference for judgment calls and design (Tyler, 2026-11-13) |
@@ -33,6 +35,7 @@ stays short.
 npm start                                  # http://localhost:3000/?test=1&token=<AGENT_TOKEN>
 npm run check                              # what CI runs, a few seconds, no keys needed
 npm run cue -- <meeting-url>               # server + tunnel + bot, leaves on Ctrl+C or after 60 min; bills Recall
+npm run panel                              # the same from http://127.0.0.1:3900; RECALL_API=<stand-in> tries it unbilled
 npm run send-bot -- <meeting-url>          # the bot only; needs RECALL_API_KEY and a public PUBLIC_URL; bills Recall
 ```
 

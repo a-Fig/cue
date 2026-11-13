@@ -45,6 +45,14 @@ npm run cue -- https://meet.google.com/xxx-xxxx-xxx
 
 This starts the server (or uses one already running), makes it public with a cloudflared quick tunnel (or uses `PUBLIC_URL` if that serves the page), sends the bot, and prints what it's doing. Admit Cue from the meeting's lobby. The bot leaves on Ctrl+C, after `CUE_MAX_MINUTES` (60 by default), or by itself once everyone else has left. Keep the laptop awake while it's in the call.
 
+### From a web page instead
+
+```bash
+npm run panel           # then open http://127.0.0.1:3900
+```
+
+Paste the meeting link and press **Send Cue in**. The panel does what `npm run cue` does, then shows where Cue is (lobby, in the call, left), how long it has been in and what that has cost, what people say and what Cue does about it, and what's on its screen. **Take Cue out** removes it. The panel listens only on `127.0.0.1` (`PANEL_PORT`, 3900 by default) and is never public; stopping it with Ctrl+C takes Cue out too.
+
 `npm run send-bot -- <meeting-url>` only sends the bot, to a server already public at `PUBLIC_URL`.
 
 Recall streams the page at 1280×720 and 15 fps. Use its Bot Explorer to open DevTools on the page while the bot is in the call.
@@ -55,4 +63,5 @@ Recall streams the page at 1280×720 and 15 fps. Use its Bot Explorer to open De
 - `agent.js`: the Claude call, system prompt and display tools
 - `public/`: the page the bot shows
 - `scripts/send-bot.mjs`: creates the Recall bot
+- `scripts/panel.mjs`, `panel/`: the local control panel (`npm run panel`)
 - `docs/VISION.md`: what Cue is for, and the questions still open

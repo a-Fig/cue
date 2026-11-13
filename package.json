@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "cue": "node --env-file-if-exists=.env scripts/cue.mjs",
+    "panel": "node --env-file-if-exists=.env scripts/panel.mjs",
     "send-bot": "node --env-file-if-exists=.env scripts/send-bot.mjs",
     "check": "node scripts/check.mjs"
   },
