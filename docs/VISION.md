@@ -120,6 +120,27 @@ meeting audio → Recall.ai bot (live transcript)
   transcript and what is on screen, and Claude answers with what to show, or nothing. The server
   keeps no state between calls.
 
+## What is settled
+
+### How fast, and how cheap (#11, 2026-11-13)
+
+Proposed by Drew's agent from replay measurements; merging the PR that adds this accepts it.
+
+- **Fast.** From the end of a spoken question to the answer on screen, nine times in ten: 8 s
+  when someone asks Cue by name, 10 s when Cue steps in on its own (it first waits for a pause,
+  in case a person answers). Slides, diagrams and captions: 4 s after the pause. Why: Tyler
+  called 10 to 13 s of research "slow" in the first real call, and the producer picture has the
+  answer up "a few seconds later", while the room is still on the question.
+- **Cheap.** At most $2 of Claude per meeting hour; Recall bills for the bot on top. Why: it
+  leaves room for a real call's longer transcript and a busier hour than the estimate below, and
+  stays small next to the time of the people in the meeting.
+- **Measured** (replay of 33 ticks, Sonnet 5.5 at medium effort, web search without a sandbox
+  or fetch): research 5.4 s median and 5.7 s max for the Claude call, other visuals 2.1 s,
+  quiet ticks 1.7 s at $0.002; about $0.90 for an hour of 360 ticks with 10 look-ups. Still
+  unmeasured: Recall's transcript delay and the page fetch (about 1 s), which add to the call.
+  Unprompted look-ups also wait 2.5 to 6.5 s for a pause before the call starts, so they meet
+  10 s only at the quick end until the page checks for a pause more often than every 4 s.
+
 ## What is still open
 
 These decide what Cue becomes. Each has an issue.
@@ -128,7 +149,6 @@ These decide what Cue becomes. Each has an issue.
 |---|---|---|
 | What is the demo? | #9 | yes |
 | When does Cue act unprompted, and when does it stay quiet? | #10 | yes |
-| How fast and how cheap does a think call need to be? | #11 | yes |
 | Screen share or camera tile: where does Cue show things? | #12 | yes |
 | How do people talk to Cue, and who may? | #13 | |
 | How do we keep what Cue shows right, and safe for a room? | #14 | |
