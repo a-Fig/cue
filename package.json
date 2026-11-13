@@ -1,5 +1,5 @@
 {
-  "name": "quiet-intern",
+  "name": "cue",
   "version": "0.1.0",
   "description": "A silent AI meeting participant that listens and shows visuals: live research, slides, diagrams, captions and pings.",
   "type": "module",

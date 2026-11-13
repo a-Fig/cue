@@ -1,9 +1,13 @@
-# quiet-intern: notes for Claude Code
+# Cue: notes for Claude Code
 
 A silent AI participant in video calls, built for a hackathon (started 2026-11-13). A Recall.ai bot
 joins the call and streams `public/` as its screen share; that page reads the live transcript and
 asks `/api/think` (Claude, with web search) what to show: research with highlights, slides, Mermaid
 diagrams, videos, captions, pings. It never speaks. The README covers running it.
+
+Cue is the product, the repo and the bot's name in the call (renamed from quiet-intern on
+2026-11-13). "Intern" still describes its personality in the prompt, and "intern, …" still works as
+a wake word next to "Cue, …", which transcripts may spell "Q" or "queue" (`WAKE` in `public/app.js`).
 
 ## Writing for whoever comes next
 
@@ -66,7 +70,7 @@ Tyler's rules from murmur and pi-vi, lightened for the hackathon (2026-11-13):
 - Every PR closes at least one issue, and its body starts with only its `Closes #N` lines; work no
   issue covers gets one filed first.
 - PR bodies follow `.github/pull_request_template.md`; an agent opening a PR through `gh` writes
-  those sections itself. A PR that changes what's on the intern's screen shows it: screenshots,
+  those sections itself. A PR that changes what's on Cue's screen shows it: screenshots,
   or a GIF when it moves (`node .github/pr-media.mjs <pr> <files>` uploads them).
 - Commits to `main` go through PRs; Tyler merges. CI must be green.
 - Every PR that changes `server.js`, `agent.js` or the API gets an Opus or Sol review before it's

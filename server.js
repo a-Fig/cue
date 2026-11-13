@@ -62,7 +62,7 @@ function isPublicHttpUrl(raw) {
 
 async function fetchReadable(target) {
   const r = await fetch(target, {
-    headers: { "user-agent": "Mozilla/5.0 (compatible; QuietIntern/0.1)" },
+    headers: { "user-agent": "Mozilla/5.0 (compatible; Cue/0.1)" },
     redirect: "follow",
     signal: AbortSignal.timeout(10_000),
   });
@@ -123,5 +123,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`quiet-intern on http://localhost:${PORT}/?test=1${TOKEN ? `&token=${TOKEN}` : ""}`);
+  console.log(`cue on http://localhost:${PORT}/?test=1${TOKEN ? `&token=${TOKEN}` : ""}`);
 });
