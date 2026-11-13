@@ -50,8 +50,9 @@ once, without waiting for the model.
 
 ## Who it is for
 
-For now: a small working meeting (a handful of people, in English, on Meet, Zoom or Teams) where
-questions of fact come up and plans get described aloud.
+For now: a small working meeting (a handful of people, in English) where questions of fact come
+up and plans get described aloud. Google Meet comes first (Tyler, 2026-11-13); Recall also
+covers Zoom and Teams, untried.
 
 Not for: webinars and large calls, calls where a bot listening is unwelcome, or people who want
 an assistant that answers aloud. Not a note-taker either: products that record and summarize

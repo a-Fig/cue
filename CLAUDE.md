@@ -50,6 +50,18 @@ Playwright renders any view without a Claude key (how PR screenshots get made).
 - The model is `claude-opus-5-5` at low effort (`CLAUDE_MODEL`, `CLAUDE_EFFORT`); every think
   call is billed, and research calls take several seconds.
 
+## Who is on what
+
+The split, as Tyler gave it on 2026-11-13. Issues are assigned to match.
+
+| Who | Area | Issues |
+|---|---|---|
+| Tyler (`a-Fig`) | Getting Cue into a Google Meet call | #4, #12, #16 |
+| Drew (`DhruvaKanna07`) | The agent: making it do what we want and be helpful in the meeting | #10, #11, #13, #14, #17, #18 |
+| Cara (`tthy-working`) and the fourth member | The demo video, and whatever else comes up | #9 |
+
+Google Meet is the call app to get working first.
+
 ## Issue labels
 
 Copied from `a-Fig/murmur`. Every issue carries at least a kind label.
