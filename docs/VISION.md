@@ -160,7 +160,8 @@ the people in it are told, and this is where their words go.
 |---|---|---|
 | The call's audio | Recall.ai, which transcribes it live | The recording and transcript, for 24 hours after the call (`retention` in `scripts/recall.mjs`). Left unset, Recall keeps them forever for accounts made after 2025-06-12 |
 | The last 4 minutes of transcript, on every think call | Anthropic's API (Claude) | Deleted by Anthropic within 30 days by default; longer only if flagged under its Usage Policy or held for legal reasons |
-| The newest 12 lines, on each tick, when `OPENROUTER_API_KEY` is set | OpenRouter's decisions API (Jev, System 1, #50) | Depends on OpenRouter and the model's provider; not yet checked |
+| The same, instead, when `CUE_MODEL_PROVIDER=gemini` (#55) | Google's Gemini API, with Google Search grounding | Kept by Google for 55 days to check for abuse. On a project with billing on, not used to improve Google's products; on the free tier, it may be |
+| The newest 12 lines, on each tick, when `OPENROUTER_API_KEY` is set | OpenRouter's decisions API, to Jev (System 1, #50), which one provider, TypeSafe, hosts | OpenRouter keeps no prompts or answers unless the account turns on its prompt logging, only token counts and timings. TypeSafe publishes no retention policy that OpenRouter's pages show, so what it keeps is unknown |
 | Search terms Claude picks from what was said | Anthropic's web search and fetch tools | Under Anthropic's API terms, as above |
 | Pages Cue highlights | Fetched by our server (`/api/page`) | Nothing |
 | Our server's log | Stays on whichever machine runs it | Timings and tool names, never transcript text |
@@ -169,7 +170,11 @@ Sources, read 2026-11-13: Recall's
 [storage and retention](https://docs.recall.ai/docs/data-retention) and
 [chat messages](https://docs.recall.ai/docs/chat-messages) docs, and Anthropic's
 [API data retention](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-commercial-api-data)
-page.
+page. Read 2026-11-13 for the rest: OpenRouter's
+[data collection](https://openrouter.ai/docs/guides/privacy/data-collection) page and
+[Jev 1.13's page](https://openrouter.ai/typesafe/jev-1.13), and Google's Gemini API
+[usage policies](https://aistudio.google.com/docs/usage-policies) and
+[logs policy](https://ai.google.dev/gemini-api/docs/logs-policy).
 
 How the room is told:
 
