@@ -326,3 +326,30 @@ $("meetingUrl").addEventListener("paste", (e) => {
 });
 
 poll();
+
+// ---------- model and thinking ----------
+// Writes .cue-settings.json through the panel's local API; agent.js picks it up on the next look.
+const LABELS = { "claude-haiku-5-5": "Haiku 5.5", "claude-sonnet-5-5": "Sonnet 5.5", "claude-opus-5-5": "Opus 5.5" };
+async function setupBrain() {
+  let st;
+  try { st = await (await fetch("/api/settings")).json(); } catch { return; }
+  const fill = (sel, items, value, label = (x) => x) => {
+    sel.replaceChildren(...items.map((v) => Object.assign(document.createElement("option"), { value: v, textContent: label(v), selected: v === value })));
+  };
+  fill($("modelSel"), st.models, st.model, (m) => LABELS[m] || m);
+  fill($("effortSel"), st.efforts, st.effort);
+  $("brain").hidden = false;
+  const save = async () => {
+    $("brainNote").textContent = "…";
+    try {
+      await post("/api/settings", { model: $("modelSel").value, effort: $("effortSel").value });
+      $("brainNote").textContent = "saved";
+    } catch (e) {
+      $("brainNote").textContent = e.message;
+    }
+    setTimeout(() => { $("brainNote").textContent = ""; }, 2500);
+  };
+  $("modelSel").onchange = save;
+  $("effortSel").onchange = save;
+}
+setupBrain();
