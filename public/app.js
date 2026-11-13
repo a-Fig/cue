@@ -4,6 +4,7 @@ import { addNotes, currentNotes } from "./views/notes.js";
 import { showComparison } from "./views/compare.js";
 import { showSlide } from "./views/slide.js";
 import { showDiagram } from "./views/diagram.js";
+import { showVisual } from "./views/visual.js";
 
 import { allFiller } from "./filler.js";
 
@@ -208,6 +209,7 @@ async function apply({ tool, input }) {
     case "show_comparison": return showComparison(input, viewApi);
     case "show_slide": return showSlide(input, viewApi);
     case "show_diagram": return showDiagram(input, viewApi);
+    case "show_visual": return showVisual(input, viewApi);
   }
 }
 
