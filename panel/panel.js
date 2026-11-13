@@ -58,7 +58,7 @@ const clock = (ms) => {
 };
 const hm = (t) => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const hms = (t) => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
-const money = (ms, rate) => `$${((ms / 3_600_000) * rate).toFixed(2)}`;
+const money = (ms, rate, models = 0) => `$${((ms / 3_600_000) * rate + models).toFixed(2)}`;
 
 function describe(a) {
   const i = a.input || {};
@@ -249,7 +249,7 @@ function render(st) {
     $("dot").className = `dot ${pill[0]}`;
     const t = $("pillText");
     t.replaceChildren(document.createTextNode(pill[1]));
-    if (st.sentAt) t.append(el("span", "sep", " · "), el("span", "soft", clock(ms)), el("span", "sep", " · "), el("span", "soft", money(ms, st.rate)));
+    if (st.sentAt) t.append(el("span", "sep", " · "), el("span", "soft", clock(ms)), el("span", "sep", " · "), el("span", "soft", money(ms, st.rate, st.modelUsd)));
   }
   const leave = $("leaveBtn");
   leave.hidden = !active;
@@ -265,7 +265,9 @@ function render(st) {
   note.hidden = !note.textContent;
 
   $("elapsed").textContent = clock(ms);
-  $("cost").textContent = money(ms, st.rate);
+  const recall = (ms / 3_600_000) * st.rate, models = st.modelUsd || 0;
+  $("cost").textContent = `$${(recall + models).toFixed(2)}`;
+  $("costBreakdown").textContent = `Recall $${recall.toFixed(2)} · models $${models.toFixed(models < 1 ? 3 : 2)}`;
   $("costLabel").textContent = active ? "Cost so far" : "Cost";
   $("leavesLabel").textContent = active ? "Leaves by itself in" : "Ended";
   $("leavesAt").textContent = active ? (st.sentAt ? clock(st.sentAt + st.maxMinutes * 60_000 - st.now) : `${st.maxMinutes}:00`) : st.endedAt ? hm(st.endedAt) : "—";

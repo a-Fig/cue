@@ -44,6 +44,7 @@ const state = {
   tunnelLost: false,
   log: [], // { at, text }: what the panel did, in plain words
   feed: [], // { id, at, kind: "heard"|"did"|"quiet"|"failed", ... }
+  modelUsd: 0, // Claude and Jev spend of this bot's think calls (each response's usage.usd)
   screen: null, // what the bot's page says is on its screen, from its latest think call
 };
 let feedId = 0;
@@ -97,6 +98,7 @@ function recordThink(reqBody, status, resBody, ms) {
   for (const l of newLines(sent.transcript)) feed({ kind: "heard", speaker: String(l.speaker || "Someone"), text: String(l.text || "") });
   const s = sent.screen;
   if (s && typeof s === "object") state.screen = { mode: text(s.mode, 40), title: text(s.title), url: text(s.url, 500), audioMuted: Boolean(s.audioMuted), screenHidden: Boolean(s.screenHidden) };
+  if (status === 200 && Number.isFinite(got.usage?.usd)) state.modelUsd += got.usage.usd;
   if (status !== 200) return feed({ kind: "failed", ms, text: String(got.error || `status ${status}`) });
   const actions = Array.isArray(got.actions) ? got.actions : [];
   if (!actions.length) return feed({ kind: "quiet", ms });
@@ -204,7 +206,7 @@ async function send(meetingUrl) {
   if (["starting", "joining", "lobby", "in_call", "leaving"].includes(state.phase)) throw new Error("Cue is already on its way or in a call.");
   if (!/^https:\/\/\S+$/.test(meetingUrl)) throw new Error("That doesn't look like a meeting link. Paste the whole https://… address.");
   if (!process.env.RECALL_API_KEY) throw new Error("RECALL_API_KEY isn't set in .env.");
-  Object.assign(state, { message: "getting the server and tunnel ready…", meetingUrl, botId: "", sentAt: 0, endedAt: 0, screen: null, phaseAt: {}, tunnelLost: false });
+  Object.assign(state, { message: "getting the server and tunnel ready…", meetingUrl, botId: "", sentAt: 0, endedAt: 0, screen: null, modelUsd: 0, phaseAt: {}, tunnelLost: false });
   cancelled = false;
   setPhase("starting");
   state.log = [];
