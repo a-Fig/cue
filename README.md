@@ -6,8 +6,11 @@ A silent AI participant for Zoom, Google Meet and Teams calls. It listens, never
 - **Slides and diagrams:** turns the discussion into bullet slides or Mermaid diagrams as people talk.
 - **Captions:** one-line messages to the room ("Found it: …").
 - **Pings:** a short sound when it has something you asked for.
+- **Videos:** plays a YouTube clip or `.mp4` for everyone, from a chosen timestamp.
 
 Think of a very quiet, very helpful intern. Say "intern, …" to ask it something directly.
+
+These spoken commands run instantly in the page, without waiting for the model: "intern, mute" / "unmute", "intern, stop the video", "intern, hide your screen" / "show your screen". Start it muted with `?muted` on the page URL.
 
 ## How it works
 

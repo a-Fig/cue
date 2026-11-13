@@ -14,6 +14,7 @@
       <span id="botName">Quiet Intern</span>
       <span class="sep">·</span>
       <span id="statusText">listening</span>
+      <span class="muted-badge" id="mutedBadge" hidden>muted</span>
     </header>
 
     <section class="view idle active" id="view-idle">
@@ -51,6 +52,17 @@
         <p class="source" id="researchSource"></p>
       </aside>
     </section>
+
+    <section class="view video" id="view-video">
+      <h1 id="videoTitle"></h1>
+      <div class="video-box" id="videoBox"></div>
+    </section>
+
+    <!-- Covers everything when the humans ask the intern to get off the screen. -->
+    <div class="cover" id="cover" hidden>
+      <p>Screen paused</p>
+      <p class="hint">Say "intern, show your screen" to bring it back.</p>
+    </div>
 
     <footer class="caption" id="caption"></footer>
   </main>

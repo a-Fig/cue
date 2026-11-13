@@ -21,6 +21,8 @@ const state = {
   addressed: false,     // someone said "intern"
   busy: false,
   screen: { mode: "idle" },
+  muted: params.has("muted"), // start muted with ?muted
+  hidden: false,
   recentActions: [],
 };
 
@@ -59,6 +61,26 @@ function addLine(speaker, text) {
   if (!state.pendingSince) state.pendingSince = t;
   if (/\bintern\b/i.test(text)) state.addressed = true;
   $("ticker").textContent = `${speaker}: ${text}`;
+  localCommand(text);
+}
+
+// Control phrases run instantly in the page, without waiting for Claude,
+// so "intern, mute" always works. Claude still sees the line and the new state.
+const COMMANDS = [
+  [/\bunmute\b/, () => setAudio(false)],
+  [/\b(mute|be quiet|shush|no (more )?(sounds?|noise))\b/, () => setAudio(true)],
+  [/\bstop (the |that )?(video|clip)\b|\bstop playing\b/, () => stopVideo(true)],
+  [/\b(hide|close|stop sharing|turn off) (your |the )?screen\b|\bget off (the )?screen\b/, () => setScreen(false)],
+  [/\b(show|share|bring back|turn on) (your |the )?screen\b/, () => setScreen(true)],
+];
+function localCommand(text) {
+  const m = text.toLowerCase().match(/\bintern\b[\s,.!:-]*(.*)/);
+  if (!m) return;
+  const rest = m[1];
+  // Run every command in the line, so "unmute and show your screen" does both.
+  const hits = COMMANDS.filter(([re]) => re.test(rest));
+  hits.forEach(([, run]) => run());
+  if (hits.length) log("local command:", rest);
 }
 
 // Recall's in-bot websocket. Message shape follows Recall's real-time
@@ -101,7 +123,7 @@ async function maybeThink(force = false) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         transcript: state.transcript.map(({ speaker, text }) => ({ speaker, text })),
-        screen: state.screen,
+        screen: { ...state.screen, audioMuted: state.muted, screenHidden: state.hidden },
         recentActions: state.recentActions,
       }),
     });
@@ -125,6 +147,7 @@ function remember(text) {
 }
 
 function showView(name) {
+  if (name !== "video") stopVideo();
   for (const el of document.querySelectorAll(".view")) {
     el.classList.toggle("active", el.id === `view-${name}`);
   }
@@ -137,7 +160,92 @@ async function apply({ tool, input }) {
     case "show_research": return showResearch(input);
     case "caption": return showCaption(input.text);
     case "ping": return ping(input.sound);
+    case "play_video": return playVideo(input);
+    case "stop_video": return stopVideo(true);
+    case "set_audio": return setAudio(input.muted);
+    case "set_screen": return setScreen(input.visible);
   }
+}
+
+// ---------- video ----------
+// YouTube plays in an embed; anything else is treated as a direct video file.
+function youtubeId(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "youtu.be") return u.pathname.slice(1);
+    if (/(^|\.)youtube(-nocookie)?\.com$/.test(u.hostname)) {
+      if (u.searchParams.get("v")) return u.searchParams.get("v");
+      const m = u.pathname.match(/^\/(embed|shorts|live)\/([\w-]+)/);
+      if (m) return m[2];
+    }
+  } catch {}
+  return null;
+}
+
+let ytFrame = null;
+function ytCommand(func) {
+  ytFrame?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
+}
+
+function playVideo({ url, title, start_seconds = 0 }) {
+  stopVideo();
+  const box = $("videoBox");
+  const id = youtubeId(url);
+  const start = Math.max(0, Math.floor(start_seconds || 0));
+  if (id) {
+    const src = new URL(`https://www.youtube.com/embed/${encodeURIComponent(id)}`);
+    src.search = new URLSearchParams({
+      autoplay: "1", start: String(start), enablejsapi: "1", rel: "0", playsinline: "1", controls: "0", iv_load_policy: "3",
+      mute: state.muted ? "1" : "0", origin: location.origin,
+    });
+    ytFrame = Object.assign(document.createElement("iframe"), {
+      src: src.toString(), allow: "autoplay; encrypted-media", title,
+    });
+    box.replaceChildren(ytFrame);
+  } else {
+    const v = Object.assign(document.createElement("video"), {
+      src: url, autoplay: true, controls: false, muted: state.muted, playsInline: true,
+    });
+    v.addEventListener("loadedmetadata", () => { if (start) v.currentTime = start; }, { once: true });
+    v.addEventListener("error", () => log("video failed to load:", url));
+    v.play().catch((e) => log("video play blocked:", e.message));
+    box.replaceChildren(v);
+  }
+  $("videoTitle").textContent = title;
+  // Switch view without stopping the video we just started.
+  for (const el of document.querySelectorAll(".view")) el.classList.toggle("active", el.id === "view-video");
+  state.screen = { mode: "video", title, url };
+  remember(`video: ${title}`);
+}
+
+function stopVideo(explicit = false) {
+  const box = $("videoBox");
+  if (!box.firstChild) return;
+  box.querySelector("video")?.pause();
+  box.replaceChildren(); // removing the iframe stops YouTube too
+  ytFrame = null;
+  if (explicit) {
+    showView("idle");
+    state.screen = { mode: "idle" };
+    remember("stopped video");
+  }
+}
+
+// ---------- mute and screen ----------
+function setAudio(muted) {
+  state.muted = Boolean(muted);
+  $("mutedBadge").hidden = !state.muted;
+  const v = $("videoBox").querySelector("video");
+  if (v) v.muted = state.muted;
+  ytCommand(state.muted ? "mute" : "unMute");
+  if (audio) state.muted ? audio.suspend() : audio.resume();
+  remember(state.muted ? "muted" : "unmuted");
+}
+
+function setScreen(visible) {
+  state.hidden = !visible;
+  $("cover").hidden = visible;
+  remember(visible ? "screen shown" : "screen hidden");
 }
 
 function showSlide({ title, bullets }) {
@@ -278,6 +386,7 @@ function showCaption(text) {
 // --- pings: synthesized, so there are no audio files to host ---
 let audio;
 function ping(kind = "soft") {
+  if (state.muted) return log("ping skipped (muted)");
   audio ||= new AudioContext();
   audio.resume();
   const notes = { soft: [880], chime: [660, 990], alert: [1046, 1046, 1046] }[kind] || [880];
@@ -328,4 +437,5 @@ function setupTest() {
   addEventListener("pointerdown", () => { audio ||= new AudioContext(); audio.resume(); }, { once: true });
 }
 
+$("mutedBadge").hidden = !state.muted;
 TEST ? setupTest() : connectRecall();
