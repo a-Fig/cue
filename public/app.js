@@ -4,7 +4,7 @@
 const params = new URLSearchParams(location.search);
 const TOKEN = params.get("token") || "";
 const TEST = params.has("test");
-const NAME = params.get("name") || "Quiet Intern";
+const NAME = params.get("name") || "Cue";
 
 const TICK_MS = 4000;        // how often we consider thinking
 const QUIET_GAP_MS = 2500;   // wait for a pause in speech before thinking...
@@ -18,7 +18,7 @@ const state = {
   lastLineAt: 0,
   lastThinkAt: 0,
   pendingSince: 0,      // first unprocessed line time, 0 when caught up
-  addressed: false,     // someone said "intern"
+  addressed: false,     // someone said "Cue, …" (see WAKE)
   busy: false,
   screen: { mode: "idle" },
   muted: params.has("muted"), // start muted with ?muted
@@ -43,7 +43,7 @@ function setStatus(text, mode = "ok") {
 }
 
 function log(...args) {
-  console.log("[intern]", ...args);
+  console.log("[cue]", ...args);
   if (TEST) {
     const el = $("testLog");
     el.textContent = `${args.join(" ")}\n${el.textContent}`.slice(0, 4000);
@@ -51,6 +51,10 @@ function log(...args) {
 }
 
 // ---------- transcript in ----------
+// How people address it: "Cue, …" at the start of a sentence, or "hey/ok Cue". Speech-to-text
+// may write "Q" or "queue"; those need a comma after them ("Q, …") unless "hey"/"ok" comes first,
+// so "Queue is backed up" or "Q and A" don't wake it. The old "intern, …" works anywhere.
+const WAKE = /(?:(?:^|[.!?]\s+)(?:cue\b|(?:queue|q)(?=,))|\b(?:hey|ok|okay)[\s,]+(?:cue|queue|q)\b|\bintern\b)[\s,.!:-]*/i;
 function addLine(speaker, text) {
   text = (text || "").trim();
   if (!text) return;
@@ -59,13 +63,13 @@ function addLine(speaker, text) {
   state.transcript = state.transcript.filter((l) => t - l.t < CONTEXT_MS);
   state.lastLineAt = t;
   if (!state.pendingSince) state.pendingSince = t;
-  if (/\bintern\b/i.test(text)) state.addressed = true;
+  if (WAKE.test(text)) state.addressed = true;
   $("ticker").textContent = `${speaker}: ${text}`;
   localCommand(text);
 }
 
 // Control phrases run instantly in the page, without waiting for Claude,
-// so "intern, mute" always works. Claude still sees the line and the new state.
+// so "Cue, mute" always works. Claude still sees the line and the new state.
 const COMMANDS = [
   [/\bunmute\b/, () => setAudio(false)],
   [/\b(mute|be quiet|shush|no (more )?(sounds?|noise))\b/, () => setAudio(true)],
@@ -74,9 +78,9 @@ const COMMANDS = [
   [/\b(show|share|bring back|turn on) (your |the )?screen\b/, () => setScreen(true)],
 ];
 function localCommand(text) {
-  const m = text.toLowerCase().match(/\bintern\b[\s,.!:-]*(.*)/);
+  const m = WAKE.exec(text);
   if (!m) return;
-  const rest = m[1];
+  const rest = text.slice(m.index + m[0].length).toLowerCase();
   // Run every command in the line, so "unmute and show your screen" does both.
   const hits = COMMANDS.filter(([re]) => re.test(rest));
   hits.forEach(([, run]) => run());
@@ -355,7 +359,7 @@ async function showResearch({ url, title, summary, highlights }) {
     return;
   }
 
-  // Scroll to each highlight in turn so the "intern" walks through what it found.
+  // Scroll to each highlight in turn so Cue walks through what it found.
   const marks = [...pageEl.querySelectorAll("mark")];
   if (!marks.length) return;
   const items = [...$("researchHighlights").children];
@@ -411,7 +415,7 @@ const DEMO = [
   ["Sam", "Okay so for the launch we need to sort out pricing, the landing page, and who handles support."],
   ["Alex", "Right. And Priya said she can own support if we get her a help desk tool by Friday."],
   ["Sam", "The signup flow is: they land on the page, enter email, get a magic link, then onboarding, then the dashboard."],
-  ["Alex", "Intern, can you look up how big the global video conferencing market is?"],
+  ["Alex", "Cue, can you look up how big the global video conferencing market is?"],
 ];
 
 function setupTest() {

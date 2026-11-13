@@ -1,8 +1,8 @@
-// Send the intern into a meeting.
+// Send Cue into a meeting.
 //   npm run send-bot -- <meeting-url>
 // Needs RECALL_API_KEY, PUBLIC_URL and AGENT_TOKEN (see .env.example).
 const meetingUrl = process.argv[2];
-const { RECALL_API_KEY, PUBLIC_URL, AGENT_TOKEN = "", RECALL_REGION = "us-west-2", BOT_NAME = "Quiet Intern" } = process.env;
+const { RECALL_API_KEY, PUBLIC_URL, AGENT_TOKEN = "", RECALL_REGION = "us-west-2", BOT_NAME = "Cue" } = process.env;
 
 if (!meetingUrl || !RECALL_API_KEY || !PUBLIC_URL) {
   console.error("usage: npm run send-bot -- <meeting-url>   (set RECALL_API_KEY and PUBLIC_URL in .env)");
