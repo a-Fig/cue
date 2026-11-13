@@ -27,3 +27,9 @@
 .compare.dense th, .compare.dense td { padding: 10px 16px; font-size: 19px; }
 .compare.dense thead th { font-size: 21px; }
 .compare.dense tbody th { font-size: 16px; }
+/* Still too tall (long cells wrapping): smallest that stays readable at 720p */
+.compare.tight h1 { margin-bottom: 14px; font-size: 34px; }
+.compare.tight th, .compare.tight td { padding: 7px 14px; font-size: 17px; }
+.compare.tight thead th { font-size: 19px; }
+.compare.tight tbody th { font-size: 15px; }
+.compare.tight .why { margin-top: 10px; font-size: 17px; }

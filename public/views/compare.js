@@ -7,8 +7,8 @@ const MAX_OPTIONS = 4;
 const MAX_ROWS = 6;
 
 /** @param {{title: string, options: string[], rows: {criterion: string, cells: string[]}[], pick: string, why: string}} input */
-export function showComparison(input, view) {
-  const el = mountView("compare", `
+export async function showComparison(input, view) {
+  const el = await mountView("compare", `
     <h1></h1>
     <table><thead><tr></tr></thead><tbody></tbody></table>
     <p class="why"></p>`);
@@ -28,16 +28,25 @@ export function showComparison(input, view) {
     return th;
   }));
 
-  el.querySelector("tbody").replaceChildren(...rows.map((r, ri) => {
+  const why = el.querySelector(".why");
+  why.textContent = pickIdx >= 0 && input.why ? clip(input.why, 140) : "";
+
+  const fill = (cellMax) => el.querySelector("tbody").replaceChildren(...rows.map((r, ri) => {
     const tr = make("tr");
     tr.style.animationDelay = `${ri * 120}ms`;
     tr.append(make("th", "", clip(r.criterion, 30)));
-    options.forEach((_, i) => tr.append(make("td", i === pickIdx ? "pick" : "", clip(r.cells?.[i] ?? "", 60))));
+    options.forEach((_, i) => tr.append(make("td", i === pickIdx ? "pick" : "", clip(r.cells?.[i] ?? "", cellMax))));
     return tr;
   }));
 
-  const why = el.querySelector(".why");
-  why.textContent = pickIdx >= 0 && input.why ? clip(input.why, 140) : "";
+  // Long cells wrap. While the table or its "why" line would run under the caption, tighten the
+  // type, then shorten the cells.
+  const bottom = () => { const last = why.textContent ? why : el.querySelector("table"); return last.offsetTop + last.offsetHeight; };
+  const LIMIT = 720 - 96;
+  el.classList.remove("tight");
+  fill(60);
+  if (bottom() > LIMIT) el.classList.add("tight");
+  for (const max of [40, 26]) if (bottom() > LIMIT) fill(max);
 
   view.show("compare");
   view.screen({ mode: "comparison", title, options, criteria: rows.map((r) => r.criterion), pick: pickIdx >= 0 ? options[pickIdx] : "" });
