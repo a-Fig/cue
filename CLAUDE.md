@@ -24,7 +24,7 @@ stays short.
 | `public/` | The page the bot shows (`app.js`: transcript in, actions out). Plain ES modules, no build step |
 | `scripts/send-bot.mjs` | Creates the Recall bot for a meeting URL |
 | `scripts/check.mjs` | The CI check: every JS file parses, the server boots and guards its API |
-| `docs/VISION.md` | What Cue is for, what it holds to, and the open questions with their issues. A settled question's answer and reason go there, dated |
+| `docs/VISION.md` | What Cue is for, what it holds to, and the open questions with their issues. A settled question's answer and reason go there, dated. It also compares Cue with Claude Meetings, the reference for judgment calls and design (Tyler, 2026-11-13) |
 
 ## Commands
 
