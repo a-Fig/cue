@@ -182,7 +182,10 @@ function showView(name) {
   }
 }
 
-const viewApi = { show: showView, remember, mode: () => state.screen.mode, screen: (s) => { state.screen = s; } };
+const viewApi = {
+  show: showView, remember, mode: () => state.screen.mode, screen: (s) => { state.screen = s; },
+  heard: (re) => state.transcript.slice(-3).some((l) => re.test(l.text)), // in the last few lines
+};
 
 async function apply({ tool, input }) {
   switch (tool) {

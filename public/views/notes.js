@@ -3,7 +3,7 @@
 // add_notes call appends only what is new, and the page drops repeats. Every think call carries
 // the full notes (currentNotes, in CURRENT SCREEN), so Claude can avoid reworded repeats even
 // while another visual is up. Adding to the notes takes the screen only when nothing else is on
-// it; an add_notes call with nothing new is a request to show them.
+// it; an add_notes call with nothing new shows them, if someone just mentioned the notes.
 import { mountView, make, clip } from "./mount.js";
 
 const notes = { decisions: [], action_items: [], open_questions: [] };
@@ -80,8 +80,11 @@ export async function addNotes(input, view) {
 
   // Take the screen only when it's free, or when asked to show the notes (nothing new passed).
   // A decision spoken mid-video or mid-diagram shouldn't pull that away.
-  const asked = ![input.decisions, input.action_items, input.open_questions].some((l) => l?.length);
-  const shown = asked || ["idle", "notes"].includes(view.mode());
+  // An empty call means "show the notes", but the replay (#10) caught the model sending one on
+  // "back to the budget" and "thanks everyone", so it counts only when someone just said "notes".
+  const empty = ![input.decisions, input.action_items, input.open_questions].some((l) => l?.length);
+  if (empty && !view.heard(/\bnotes?\b/i)) return;
+  const shown = empty || ["idle", "notes"].includes(view.mode());
   if (shown) {
     view.show("notes");
     view.screen({ mode: "notes" }); // the notes themselves travel in every request (currentNotes)
