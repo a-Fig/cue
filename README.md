@@ -49,3 +49,4 @@ Recall streams the page at 1280×720 and 15 fps. Use its Bot Explorer to open De
 - `agent.js`: the Claude call, system prompt and display tools
 - `public/`: the page the bot shows
 - `scripts/send-bot.mjs`: creates the Recall bot
+- `docs/VISION.md`: what Cue is for, and the questions still open
