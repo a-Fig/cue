@@ -3,8 +3,11 @@
 // display tools. We never send tool results back: display tools are
 // fire-and-forget, and the page renders whatever Claude asked for.
 import Anthropic from "@anthropic-ai/sdk";
+import { thinkGemini } from "./gemini.js";
 
 const client = new Anthropic();
+// "claude" (default) or "gemini"; see gemini.js.
+const PROVIDER = process.env.CUE_MODEL_PROVIDER || "claude";
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
 const EFFORT = process.env.CLAUDE_EFFORT || "low";
 
@@ -329,6 +332,14 @@ ${lines || "(silence)"}`;
     if (!jev.act) return done({ actions: [], note: "jev: quiet" });
   }
   if (GATE_MODEL && !(await gate(user, responses))) return done({ actions: [], note: "gate: quiet" });
+
+  // CUE_MODEL_PROVIDER=gemini runs the tick on Gemini alone: no Claude
+  // fallback, so an error fails the tick as a Claude error would (Tyler,
+  // 2026-11-13: "if we're using gemini, we're using gemini").
+  if (PROVIDER === "gemini") {
+    const g = await thinkGemini({ system: SYSTEM, user, displayTools: DISPLAY_TOOLS });
+    return { ...g, ms: Date.now() - started };
+  }
 
   // pause_turn means a long server-tool turn paused; send it back to continue.
   for (let i = 0; i < 4; i++) {
