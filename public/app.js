@@ -37,6 +37,7 @@ const state = {
   muted: params.has("muted"), // start muted with ?muted
   hidden: false,
   recentActions: [],
+  videoCmdAt: 0,        // when a spoken "Cue, pause/play/stop" last ran in the page
 };
 
 $("botName").textContent = NAME;
@@ -113,17 +114,27 @@ function addLine(speaker, text) {
 
 // Control phrases run instantly in the page, without waiting for Claude,
 // so "Cue, mute" always works. Claude still sees the line and the new state.
+// The video ones act only while a video is up; speech-to-text writes them loosely ("q pause it").
+// A bare "play" only resumes when it's the whole request, so "Cue, play the Dune trailer" still
+// goes to Claude for a new video.
+const VIDEO_PAUSE = /\b(pause|hold (on|up)|hang on)\b/;
+const VIDEO_RESUME = /\b(resume|unpause|keep (going|playing)|continue|carry on|go on)\b|^(please )?(play|go)( it| that| the (video|clip))?( again)?( please)?[\s.!?]*$/;
+const VIDEO_STOP = /\bstop (the |that |this )?(video|clip|it)\b|\bstop playing\b|^(please )?stop[\s.!?]*$|\b(close|turn off) (it|that|this|the (video|clip))\b|\bturn (it|that) off\b/;
 const COMMANDS = [
   [/\bunmute\b/, () => setAudio(false)],
   [/\b(mute|be quiet|shush|no (more )?(sounds?|noise))\b/, () => setAudio(true)],
-  [/\bstop (the |that )?(video|clip)\b|\bstop playing\b/, () => stopVideo(true)],
+  [VIDEO_STOP, () => videoUp() && videoCommand(() => stopVideo(true))],
+  [VIDEO_PAUSE, () => videoUp() && videoCommand(() => pauseVideo(true))],
+  [VIDEO_RESUME, () => videoUp() && videoCommand(() => pauseVideo(false))],
   [/\b(hide|close|stop sharing|turn off) (your |the )?screen\b|\bget off (the )?screen\b/, () => setScreen(false)],
   [/\b(show|share|bring back|turn on) (your |the )?screen\b/, () => setScreen(true)],
 ];
+const videoUp = () => Boolean($("videoBox").firstChild);
+function videoCommand(run) { state.videoCmdAt = Date.now(); run(); }
 function localCommand(text) {
   const m = WAKE.exec(text);
   if (!m) return;
-  const rest = text.slice(m.index + m[0].length).toLowerCase();
+  const rest = text.slice(m.index + m[0].length).toLowerCase().trim();
   // Run every command in the line, so "unmute and show your screen" does both.
   const hits = COMMANDS.filter(([re]) => re.test(rest));
   hits.forEach(([, run]) => run());
@@ -157,6 +168,7 @@ function connectRecall() {
 async function maybeThink(force = false) {
   if (state.busy) return;
   const now = Date.now();
+  const lastLook = state.lastThinkAt;
   const hasNew = state.pendingSince > 0;
   const paused = now - state.lastLineAt > QUIET_GAP_MS;
   const waitedLong = hasNew && now - state.pendingSince > MAX_WAIT_MS;
@@ -194,7 +206,13 @@ async function maybeThink(force = false) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || r.status);
     log("actions:", data.actions.map((a) => a.tool).join(", ") || "quiet");
-    for (const a of data.actions) await apply(a);
+    // A spoken "Cue, pause" since the last look already ran in the page; this call saw the same
+    // line, so its own video moves (a stop, a replay of the same video) would undo or repeat it.
+    const handled = state.videoCmdAt > lastLook;
+    for (const a of data.actions) {
+      if (handled && isVideoRepeat(a)) { log("skipped", a.tool, "(done in the page)"); continue; }
+      await apply(a);
+    }
   } catch (err) {
     log("think failed:", err.message);
   } finally {
@@ -206,6 +224,9 @@ async function maybeThink(force = false) {
   }
 }
 setInterval(maybeThink, TICK_MS);
+
+const isVideoRepeat = ({ tool, input }) =>
+  tool === "pause_video" || tool === "stop_video" || (tool === "play_video" && input?.url === state.screen.url);
 
 // ---------- actions out ----------
 function remember(text) {
@@ -236,6 +257,7 @@ async function apply({ tool, input }) {
     case "ping": return ping(input.sound);
     case "play_video": return playVideo(input);
     case "stop_video": return stopVideo(true);
+    case "pause_video": return pauseVideo(input.paused);
     case "set_audio": return setAudio(input.muted);
     case "set_screen": return setScreen(input.visible);
     // Views in public/views/ (#18) get only what they need from here.
@@ -289,6 +311,8 @@ function playVideo({ url, title, start_seconds = 0 }) {
     });
     v.addEventListener("loadedmetadata", () => { if (start) v.currentTime = start; }, { once: true });
     v.addEventListener("error", () => log("video failed to load:", url));
+    // A finished video is a still frame too: let the stage move again (resuming replays it).
+    v.addEventListener("ended", () => $("stage").classList.remove("playing"));
     // timeupdate fires about 4 times a second; repaint the clock only when its text changes.
     v.addEventListener("timeupdate", () => {
       if (!v.duration) return;
@@ -301,6 +325,7 @@ function playVideo({ url, title, start_seconds = 0 }) {
     box.replaceChildren(v);
   }
   $("videoTitle").textContent = title;
+  $("videoPaused").hidden = true;
   // The bot's browser has little CPU to spare (#24): .playing stops every other animation on
   // the stage and takes the hidden views out of rendering while the video plays (style.css).
   $("stage").classList.add("playing");
@@ -315,9 +340,27 @@ function playVideo({ url, title, start_seconds = 0 }) {
 
 const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+// Pause or resume what's playing. The YouTube embed takes commands by postMessage
+// (enablejsapi=1 in its src); a file is a <video>.
+function pauseVideo(paused) {
+  const box = $("videoBox");
+  if (!box.firstChild) return;
+  paused = Boolean(paused);
+  const v = box.querySelector("video");
+  if (v) paused ? v.pause() : v.play().catch((e) => log("video play blocked:", e.message));
+  ytCommand(paused ? "pauseVideo" : "playVideo");
+  $("videoPaused").hidden = !paused;
+  // A still frame needs none of #24's savings, so the rest of the stage moves again while paused.
+  $("stage").classList.toggle("playing", !paused);
+  state.screen = { ...state.screen, paused };
+  if (!state.busy) setStatus(viewLabel());
+  remember(paused ? "paused video" : "resumed video");
+}
+
 function stopVideo(explicit = false) {
   const box = $("videoBox");
   $("videoTime").hidden = true;
+  $("videoPaused").hidden = true;
   if (!box.firstChild) return;
   box.querySelector("video")?.pause();
   box.replaceChildren(); // removing the iframe stops YouTube too

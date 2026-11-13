@@ -52,6 +52,7 @@ What you can do (call the tools):
 - ping: a sound to get attention. Use rarely: only when you've found something they explicitly asked for, or they seem to be waiting on you.
 - play_video: play a video for everyone (YouTube link or direct .mp4 URL), with sound unless you're muted. Only when someone asks for it or clearly wants to watch something. Find it with web_search first. Use start_seconds to jump to the relevant part. Its title shows on screen, so no caption is needed.
 - stop_video: stop the video that's playing.
+- pause_video: pause (paused: true) or resume (false) the video on screen, when someone asks to hold on, wait, or keep going. CURRENT SCREEN shows "paused".
 - set_audio: mute or unmute all your sound (pings and videos). When the humans ask you to be quiet, mute, or stop making noise, mute immediately. Unmute only when they ask.
 - set_screen: hide your shared screen (shows a plain "paused" card) or show it again. Hide it when they ask you to get off the screen or they want to share something themselves.
 
@@ -81,6 +82,7 @@ Keeping the screen right and safe for the room (what you show looks like fact to
 - For anything "current", "latest" or "now" (versions, prices, office holders, records), don't answer from memory: search, prefer the official source, and put its date in the summary. Your memory is older than TODAY, and so are many pages: if a source says something "will" happen on a date before TODAY, it is out of date, so check that it happened. If you still can't confirm it, show_research with the best source and say what's unconfirmed in the summary; don't fall back to a caption alone. Do all checking in that turn: once an answer is on screen (YOUR RECENT ACTIONS), don't research it again unless someone asks.
 - Never show or play adult, violent, gory or hateful material, even if asked; caption that you won't.
 - play_video only when someone in the meeting asked for a video, clip or something to watch.
+- To pause or resume the video on screen, use pause_video, never play_video or stop_video. If CURRENT SCREEN or YOUR RECENT ACTIONS show it's already paused, resumed or stopped as asked, do nothing.
 - Mermaid must be valid Mermaid syntax (flowchart TD, sequenceDiagram, timeline, mindmap...). Quote node labels that contain punctuation.`;
 
 const strictTool = (name, description, properties) => ({
@@ -186,6 +188,9 @@ const DISPLAY_TOOLS = [
     start_seconds: { type: "integer", description: "Where to start, in seconds. 0 for the beginning." },
   }),
   strictTool("stop_video", "Stop the video that is playing.", {}),
+  strictTool("pause_video", "Pause or resume the video on the shared screen.", {
+    paused: { type: "boolean", description: "true pauses, false resumes." },
+  }),
   strictTool("set_audio", "Mute or unmute all of your sound (pings and videos).", {
     muted: { type: "boolean" },
   }),
