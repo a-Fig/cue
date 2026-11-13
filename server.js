@@ -7,9 +7,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import net from "node:net";
 import { fileURLToPath } from "node:url";
-import { parseHTML } from "linkedom";
-import { Readability } from "@mozilla/readability";
 import { think } from "./agent.js";
+import { fetchReadable } from "./page.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
@@ -58,29 +57,6 @@ function isPublicHttpUrl(raw) {
     return !/^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|f[cd]|fe80)/i.test(host);
   }
   return true;
-}
-
-async function fetchReadable(target) {
-  const r = await fetch(target, {
-    headers: { "user-agent": "Mozilla/5.0 (compatible; Cue/0.1)" },
-    redirect: "follow",
-    signal: AbortSignal.timeout(10_000),
-  });
-  if (!r.ok) throw new Error(`upstream ${r.status}`);
-  const html = await r.text();
-  const { document } = parseHTML(html);
-  const article = new Readability(document).parse();
-  const text = (article?.textContent || document.body?.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
-  return {
-    url: r.url,
-    title: article?.title || document.title || target,
-    site: article?.siteName || new URL(r.url).hostname,
-    paragraphs: text
-      .split(/\n\s*\n/)
-      .map((p) => p.replace(/\s+/g, " ").trim())
-      .filter((p) => p.length > 0)
-      .slice(0, 400),
-  };
 }
 
 const server = http.createServer(async (req, res) => {

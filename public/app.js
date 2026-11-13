@@ -1,6 +1,8 @@
 // The page that runs inside the Recall bot (or your browser with ?test=1).
 // Listens to the transcript, asks /api/think what to do, renders the result.
 
+import { allFiller } from "./filler.js";
+
 const params = new URLSearchParams(location.search);
 const TOKEN = params.get("token") || "";
 const TEST = params.has("test");
@@ -126,6 +128,13 @@ async function maybeThink(force = false) {
   const paused = now - state.lastLineAt > QUIET_GAP_MS;
   const waitedLong = hasNew && now - state.pendingSince > MAX_WAIT_MS;
   if (!force && !(hasNew && (paused || waitedLong || state.addressed))) return;
+  // Only filler since the last look ("yeah", "got it"): a call could only
+  // answer quiet, so skip it (#11; public/filler.js says what counts).
+  if (!force && !state.addressed && allFiller(state.transcript.filter((l) => l.t > state.lastThinkAt))) {
+    state.pendingSince = 0;
+    state.lastThinkAt = now;
+    return;
+  }
 
   state.busy = true;
   state.pendingSince = 0;

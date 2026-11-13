@@ -86,11 +86,31 @@ const DISPLAY_TOOLS = [
   }),
 ];
 
-const TOOLS = [
-  { type: "web_search_20260209", name: "web_search", max_uses: 3 },
-  { type: "web_fetch_20260209", name: "web_fetch", max_uses: 2 },
-  ...DISPLAY_TOOLS,
-];
+// CLAUDE_WEB picks the web tools; the default is "search". Replays of the
+// four research transcripts, Sonnet 5.5 medium, 2026-11-13 (#11):
+// - "dynamic" (the _20260209 versions): the model writes Python that runs
+//   the search in a sandbox, then often a second sandbox step just to print
+//   results. Research 14.5 s median, up to 29 s; and only 1 of 7 quotes could
+//   be marked on the page, since the model quotes its filtered printout.
+// - "basic" (_20250305 search + _20250910 fetch): 7.5 s median, quotes
+//   markable, but when a page fetch failed it showed a slide instead.
+// - "search" (basic search, no fetch): 5.4 s median, 5.7 s max, 33/33 on the
+//   full replay, quotes markable. The search results carry the page text the
+//   quotes come from, and the page opens through /api/page anyway.
+const WEB = {
+  dynamic: [
+    { type: "web_search_20260209", name: "web_search", max_uses: 3 },
+    { type: "web_fetch_20260209", name: "web_fetch", max_uses: 2 },
+  ],
+  basic: [
+    { type: "web_search_20250305", name: "web_search", max_uses: 3 },
+    { type: "web_fetch_20250910", name: "web_fetch", max_uses: 2 },
+  ],
+  search: [{ type: "web_search_20250305", name: "web_search", max_uses: 2 }],
+}[process.env.CLAUDE_WEB || "search"];
+
+if (!WEB) throw new Error(`CLAUDE_WEB must be dynamic, basic or search, not "${process.env.CLAUDE_WEB}"`);
+const TOOLS = [...WEB, ...DISPLAY_TOOLS];
 
 const DISPLAY_NAMES = new Set(DISPLAY_TOOLS.map((t) => t.name));
 
@@ -123,6 +143,31 @@ function tally(responses) {
   return u;
 }
 
+// CLAUDE_GATE_MODEL (off by default) puts a small model in front: it reads
+// the same prompt and transcript and answers ACT or QUIET, and only ACT goes
+// on to CLAUDE_MODEL. Anything else it says, or an error, counts as ACT, so a
+// failing gate costs money, not a missed moment.
+const GATE_MODEL = process.env.CLAUDE_GATE_MODEL || "";
+const GATE_ASK = "First pass only: call no tools now. Answer with one word: ACT if the rules above call for any tool on the newest lines (a visual, caption, ping, video, sound or screen change), otherwise QUIET.";
+
+async function gate(user, responses) {
+  try {
+    const r = await client.messages.create({
+      model: GATE_MODEL,
+      max_tokens: 2000,
+      output_config: { effort: "low" },
+      system: SYSTEM,
+      messages: [{ role: "user", content: user }, { role: "system", content: GATE_ASK }],
+    });
+    responses.push(r);
+    const text = r.content.filter((b) => b.type === "text").map((b) => b.text).join(" ");
+    return !/\bQUIET\b/i.test(text) || /\bACT\b/.test(text);
+  } catch (e) {
+    console.warn("gate failed, asking the main model:", e.message);
+    return true;
+  }
+}
+
 /**
  * @param {{transcript: {speaker: string, text: string}[], screen: object, recentActions: string[]}} input
  * @returns {Promise<{actions: {tool: string, input: object}[], note?: string, usage: object, ms: number}>}
@@ -140,6 +185,8 @@ ${lines || "(silence)"}`;
   const started = Date.now();
   const responses = [];
   const done = (result) => ({ ...result, usage: tally(responses), ms: Date.now() - started });
+
+  if (GATE_MODEL && !(await gate(user, responses))) return done({ actions: [], note: "gate: quiet" });
 
   // pause_turn means a long server-tool turn paused; send it back to continue.
   for (let i = 0; i < 4; i++) {
