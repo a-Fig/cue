@@ -1,0 +1,11 @@
+{
+  "about": "People ask Cue, or the room, to pull things up, the producer-on-a-podcast picture. Requests should be answered with something on screen; thanks and control phrases should not.",
+  "lines": [
+    { "speaker": "Tom", "text": "Wait, how fast does a peregrine falcon actually dive? Can somebody pull that up?", "expect": ["show_research"] },
+    { "speaker": "Kai", "text": "That's wild. Okay." },
+    { "speaker": "Tom", "text": "Cue, show us how a jet engine works, like a diagram.", "expect": ["show_diagram", "show_research"] },
+    { "speaker": "Kai", "text": "Thanks Cue, that's helpful.", "expect": "quiet" },
+    { "speaker": "Tom", "text": "Cue, mute.", "expect": "any" },
+    { "speaker": "Kai", "text": "Anyway, back to the budget. We're at about forty thousand for Q1.", "expect": "quiet" }
+  ]
+}

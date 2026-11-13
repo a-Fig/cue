@@ -1,0 +1,14 @@
+{
+  "about": "A brainstorm that grows one idea at a time. A slide once there is a real list is good; redrawing the slide on every new bullet, or captioning every update, is churn.",
+  "lines": [
+    { "speaker": "Ivy", "text": "Let's brainstorm ways to cut onboarding drop-off." },
+    { "speaker": "Max", "text": "Shorter signup form, for one." },
+    { "speaker": "Ivy", "text": "Sure.", "expect": "quiet" },
+    { "speaker": "Zoe", "text": "A progress bar so people know how many steps are left." },
+    { "speaker": "Max", "text": "Social login, Google and Apple." },
+    { "speaker": "Ivy", "text": "And a skip button for the profile step.", "expect": ["show_slide"] },
+    { "speaker": "Zoe", "text": "Oh, maybe also a welcome email.", "expect": "any" },
+    { "speaker": "Max", "text": "Yeah.", "expect": "quiet" },
+    { "speaker": "Ivy", "text": "Okay, let's vote on these async.", "expect": "quiet" }
+  ]
+}

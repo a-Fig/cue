@@ -1,0 +1,14 @@
+{
+  "about": "Planning an offsite. One factual question goes unanswered and should be looked up; one is answered by a person and one is rhetorical, so those should not.",
+  "lines": [
+    { "speaker": "Sam", "text": "So for the offsite we were thinking Lisbon in March." },
+    { "speaker": "Jo", "text": "I love that. What's the weather actually like there in March? Is it warm enough to be outside?" },
+    { "speaker": "Sam", "text": "No idea honestly.", "expect": ["show_research"] },
+    { "speaker": "Jo", "text": "Okay. And how long is the flight from New York, roughly?" },
+    { "speaker": "Ravi", "text": "About seven hours direct, I did it last year." },
+    { "speaker": "Jo", "text": "Oh nice, that's not bad.", "expect": "quiet" },
+    { "speaker": "Sam", "text": "Budget wise, who knows what hotel prices will do by then." },
+    { "speaker": "Ravi", "text": "Yeah, it is what it is. We'll book early.", "expect": "quiet" },
+    { "speaker": "Jo", "text": "We should decide on the dates next week then.", "expect": "quiet" }
+  ]
+}
