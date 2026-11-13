@@ -51,10 +51,13 @@ function log(...args) {
 }
 
 // ---------- transcript in ----------
-// How people address it: "Cue, …" at the start of a sentence, or "hey/ok Cue". Speech-to-text
-// may write "Q" or "queue"; those need a comma after them ("Q, …") unless "hey"/"ok" comes first,
-// so "Queue is backed up" or "Q and A" don't wake it. The old "intern, …" works anywhere.
-const WAKE = /(?:(?:^|[.!?]\s+)(?:cue\b|(?:queue|q)(?=,))|\b(?:hey|ok|okay)[\s,]+(?:cue|queue|q)\b|\bintern\b)[\s,.!:-]*/i;
+// How people address it: "Cue …", which speech-to-text may write "Q" or "queue", at the start of a
+// line or sentence, after a comma, or after a filler like "so", "hey" or "okay". Recall's transcript
+// can drop punctuation: the first real call wrote "so q find me the population of japan" (#31).
+// Not a wake: "Q3", "the queue is long" (not at a start), "Queue is backed up", "Q and A",
+// "Q's revenue". A false wake costs one think call, cheaper than a missed request. The old
+// "intern, …" works anywhere.
+const WAKE = /(?:(?:^|[.!?,;]\s*|\b(?:so|and|hey|ok|okay|um|uh|yo|alright)[\s,]+)(?:cue|queue(?!\s+(?:is|was|are)\b)|q)\b(?!['’]s|\s+(?:and|&|a)\b)|\bintern\b)[\s,.!:-]*/i;
 function addLine(speaker, text) {
   text = (text || "").trim();
   if (!text) return;
