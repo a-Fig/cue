@@ -12,9 +12,14 @@ const TOKEN = params.get("token") || "";
 const TEST = params.has("test");
 const NAME = params.get("name") || "Cue";
 
-const TICK_MS = 4000;        // how often we consider thinking
-const QUIET_GAP_MS = 2500;   // wait for a pause in speech before thinking...
-const MAX_WAIT_MS = 15000;   // ...but never longer than this while people talk
+// How soon Cue looks at what was said (#26). With the Jev gate (#53) a look that ends "quiet"
+// costs ~$0.00002 and well under a second, so the page can look often: every 0.5 s, after a
+// 0.8 s pause, and at least every 6 s while people keep talking. These were 4 s, 2.5 s and 15 s,
+// when every look was a full Claude call; then a request waited up to 6.5 s before Cue even
+// started on it. A wake word ("Cue, …") doesn't wait at all (#28).
+const TICK_MS = 500;         // how often we consider thinking
+const QUIET_GAP_MS = 800;    // wait for a pause in speech before thinking...
+const MAX_WAIT_MS = 6000;    // ...but never longer than this while people talk
 const CONTEXT_MS = 4 * 60 * 1000; // send the last ~4 minutes of transcript
 const CAPTION_MS = 7000;
 
