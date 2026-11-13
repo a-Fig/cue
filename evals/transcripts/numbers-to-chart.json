@@ -1,0 +1,9 @@
+{
+  "about": "A team reads out quarterly numbers. Once all four are said, a bar chart shows the trend better than words; chatter before and after stays quiet.",
+  "lines": [
+    { "speaker": "Maya", "text": "Morning all. Let's start with the signup numbers since that's what the board will ask about.", "expect": "quiet" },
+    { "speaker": "Maya", "text": "So Q1 we had 1,200 signups, Q2 was 1,850, Q3 jumped to 3,100, and this quarter we're at 4,400 with two weeks left." },
+    { "speaker": "Dev", "text": "Wow, so it's basically more than tripled since Q1. That's the story for the board.", "expect": ["show_visual"], "check": "4,?400" },
+    { "speaker": "Maya", "text": "Exactly. Okay, nice work everyone.", "expect": "quiet" }
+  ]
+}

@@ -30,12 +30,12 @@ const MAX_HTML = 5_000_000; // bytes; a page bigger than this isn't an article
 // Follows redirects by hand so every hop gets the same address check: with
 // redirect: "follow", a public URL could bounce the server to 127.0.0.1 or a
 // cloud metadata address (#14).
-async function fetchPublic(target, signal) {
+export async function fetchPublic(target, signal, headers = {}) {
   let url = target;
   for (let hop = 0; hop < 5; hop++) {
     if (!isPublicHttpUrl(url)) throw new Error("redirect to a url that isn't allowed");
     const r = await fetch(url, {
-      headers: { "user-agent": "Mozilla/5.0 (compatible; Cue/0.1)" },
+      headers: { "user-agent": "Mozilla/5.0 (compatible; Cue/0.1)", ...headers },
       redirect: "manual",
       signal,
     });
