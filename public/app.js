@@ -1,5 +1,7 @@
 // The page that runs inside the Recall bot (or your browser with ?test=1).
 // Listens to the transcript, asks /api/think what to do, renders the result.
+import { addNotes, currentNotes } from "./views/notes.js";
+import { showComparison } from "./views/compare.js";
 
 import { allFiller } from "./filler.js";
 
@@ -148,7 +150,7 @@ async function maybeThink(force = false) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         transcript: state.transcript.map(({ speaker, text }) => ({ speaker, text })),
-        screen: { ...state.screen, audioMuted: state.muted, screenHidden: state.hidden },
+        screen: { ...state.screen, audioMuted: state.muted, screenHidden: state.hidden, notes: currentNotes() },
         recentActions: state.recentActions,
         addressed,
       }),
@@ -180,6 +182,11 @@ function showView(name) {
   }
 }
 
+const viewApi = {
+  show: showView, remember, mode: () => state.screen.mode, screen: (s) => { state.screen = s; },
+  heard: (re) => state.transcript.slice(-3).some((l) => re.test(l.text)), // in the last few lines
+};
+
 async function apply({ tool, input }) {
   switch (tool) {
     case "show_slide": return showSlide(input);
@@ -191,6 +198,9 @@ async function apply({ tool, input }) {
     case "stop_video": return stopVideo(true);
     case "set_audio": return setAudio(input.muted);
     case "set_screen": return setScreen(input.visible);
+    // Views in public/views/ (#18) get only what they need from here.
+    case "add_notes": return addNotes(input, viewApi);
+    case "show_comparison": return showComparison(input, viewApi);
   }
 }
 

@@ -14,9 +14,11 @@ Personality: a super helpful, very quiet intern. You stay out of the way. You ac
 
 What you can do (call the tools):
 - show_research: when someone asks a factual question, mentions something worth looking up, or says "can someone check...". First use web_search (and web_fetch on the best page), then call show_research with the page URL and 1-4 short passages copied VERBATIM from that page (exact text, so they can be highlighted on the page).
-- show_slide: when the group is listing ideas, options, decisions or action items, summarize them as a clean slide.
+- show_slide: when the group is listing ideas or points that aren't decisions, tasks or options being weighed, summarize them as a clean slide.
 - show_diagram: when they describe a process, architecture, flow, timeline or relationships, draw a Mermaid diagram.
-- caption: a one-line text message to the humans, e.g. "Found it: revenue was $4.2B in 2025" or "You agreed on 3 action items, see slide". Under 120 characters.
+- add_notes: running notes that last the whole call. When the group clearly decides something, gives someone a task ("Priya will set up the help desk by Friday"), or leaves a question open, add just the new items. CURRENT SCREEN's "notes" holds every note so far, even while another visual is up: never add something already there, even reworded. If another visual is up, the notes update without taking the screen; call add_notes with empty lists when someone asks to see the notes.
+- show_comparison: when the group weighs two to four options against each other, show a table: options as columns, up to 6 criteria as rows, cells of a few words. Set pick (one option's exact name) only when the group or the facts clearly favour one, with why in one line; otherwise empty strings. Research first if the cells need facts.
+- caption: a one-line text message to the humans, e.g. "Found it: revenue was $4.2B in 2025" or "Noted: Priya owns support from launch day". Under 120 characters.
 - ping: a sound to get attention. Use rarely: only when you've found something they explicitly asked for, or they seem to be waiting on you.
 - play_video: play a video for everyone (YouTube link or direct .mp4 URL), with sound unless you're muted. Only when someone asks for it or clearly wants to watch something. Find it with web_search first. Use start_seconds to jump to the relevant part. Always add a caption saying what's playing.
 - stop_video: stop the video that's playing.
@@ -28,7 +30,7 @@ Rules:
 - Never repeat what is already on screen (see CURRENT SCREEN). Update a slide or diagram only when the content meaningfully changed.
 - Focus on the latest part of the transcript. Older lines are context.
 - If someone addresses you directly ("Cue, ...", which the transcript may spell "Q" or "queue", or "intern, ..."), always respond with an action and a caption.
-- At most one visual (research, slide, diagram or video) per turn, plus optionally one caption and one ping.
+- At most one visual (research, slide, diagram, notes, comparison or video) per turn, plus optionally one caption and one ping.
 - CURRENT SCREEN tells you if your audio is muted and your screen is hidden. While muted, don't ping. While the screen is hidden, don't show visuals unless asked; use captions sparingly.
 - A new visual replaces a playing video, so don't interrupt a video unless they've moved on.
 - Keep slides to a title and at most 5 short bullets.
@@ -72,6 +74,41 @@ const DISPLAY_TOOLS = [
   strictTool("show_diagram", "Show a Mermaid diagram.", {
     title: { type: "string" },
     mermaid: { type: "string", description: "Valid Mermaid source." },
+  }),
+  strictTool("add_notes", "Add new items to the running meeting notes and show them. Each list holds only items not already in the notes; pass [] for lists with nothing new.", {
+    decisions: { type: "array", items: { type: "string" }, description: "What the group decided, each under 100 characters." },
+    action_items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          task: { type: "string", description: "The task, under 80 characters, including any deadline." },
+          owner: { type: "string", description: "Who will do it, as named in the transcript, or \"Someone\"." },
+        },
+        required: ["task", "owner"],
+        additionalProperties: false,
+      },
+    },
+    open_questions: { type: "array", items: { type: "string" }, description: "Questions raised and left unanswered, each under 100 characters." },
+  }),
+  strictTool("show_comparison", "Show a table comparing 2-4 options on up to 6 criteria.", {
+    title: { type: "string", description: "What is being compared, under 60 characters." },
+    options: { type: "array", items: { type: "string" }, description: "2-4 option names, each under 25 characters." },
+    rows: {
+      type: "array",
+      description: "Up to 6 criteria, one row each.",
+      items: {
+        type: "object",
+        properties: {
+          criterion: { type: "string", description: "Under 25 characters." },
+          cells: { type: "array", items: { type: "string" }, description: "One cell per option, in the same order, each under 50 characters." },
+        },
+        required: ["criterion", "cells"],
+        additionalProperties: false,
+      },
+    },
+    pick: { type: "string", description: "The exact name of the favoured option, or empty." },
+    why: { type: "string", description: "One line on why the pick, or empty." },
   }),
   strictTool("caption", "Show a one-line text message to the humans.", {
     text: { type: "string" },
