@@ -11,6 +11,8 @@
 //   ["show_research",...] one of these tools should be called (captions and
 //                         pings alongside are fine)
 //   "any"                 not scored (e.g. "Cue, mute", which the page handles)
+// A tick may also have a `check`: a regex the actions' text must match (e.g. the
+// right version number), or a helpful tool choice counts as "wrong" (#14).
 // The judgments carry the vision's rule: a needless visual costs the whole
 // room's attention, a missed chance costs little, so "annoying" counts double.
 //
@@ -46,12 +48,14 @@ function applyToState(st, { tool, input }) {
   }
 }
 
-function judge(expect, actions) {
+function judge(expect, actions, check) {
   if (expect === "any") return "unscored";
   const tools = actions.map((a) => a.tool);
   if (expect === "quiet") return tools.length ? "annoying" : "right-quiet";
   if (!tools.length) return "missed";
-  return tools.some((t) => expect.includes(t)) ? "helpful" : "annoying";
+  if (!tools.some((t) => expect.includes(t))) return "annoying";
+  if (check && !new RegExp(check, "i").test(JSON.stringify(actions.map((a) => a.input)))) return "wrong";
+  return "helpful";
 }
 
 // What a tick cost depends on what it did, so costs and latencies are split
@@ -109,7 +113,7 @@ async function runTranscript(file) {
     for (const a of result.actions) applyToState(st, a);
     const research = result.actions.find((a) => a.tool === "show_research");
     const marks = research ? await highlightsFound(research.input) : undefined;
-    ticks.push({ after: `${line.speaker}: ${line.text}`, expect: line.expect, verdict: judge(line.expect, result.actions),
+    ticks.push({ after: `${line.speaker}: ${line.text}`, expect: line.expect, verdict: judge(line.expect, result.actions, line.check),
       actions: result.actions, note: result.note, ms, kind: kindOf(result), usage: result.usage, marks });
   }
   return { file, about, ticks };
@@ -131,11 +135,12 @@ for (const r of runs) {
   }
 }
 const n = (k) => count[k] || 0;
-const scored = n("helpful") + n("right-quiet") + n("annoying") + n("missed");
+const scored = n("helpful") + n("right-quiet") + n("annoying") + n("missed") + n("wrong");
 const all = runs.flatMap((r) => r.ticks).map((t) => t.ms).sort((a, b) => a - b);
-const score = n("helpful") + n("right-quiet") - 2 * n("annoying") - n("missed");
-console.log(`\nhelpful ${n("helpful")}, right-quiet ${n("right-quiet")}, annoying ${n("annoying")}, missed ${n("missed")} of ${scored} scored ticks`);
-console.log(`score ${score} (max ${scored}): helpful + right-quiet - 2*annoying - missed`);
+// A wrong answer on screen is worse than a needless one: it looks like fact.
+const score = n("helpful") + n("right-quiet") - 2 * n("annoying") - n("missed") - 2 * n("wrong");
+console.log(`\nhelpful ${n("helpful")}, right-quiet ${n("right-quiet")}, annoying ${n("annoying")}, missed ${n("missed")}, wrong ${n("wrong")} of ${scored} scored ticks`);
+console.log(`score ${score} (max ${scored}): helpful + right-quiet - 2*annoying - missed - 2*wrong`);
 console.log(`latency median ${all[all.length >> 1]}ms, max ${all.at(-1)}ms; model ${process.env.CLAUDE_MODEL || "claude-opus-5-5"}, effort ${process.env.CLAUDE_EFFORT || "low"}`);
 
 // Cost and latency by kind of tick, then an hour projected from them. The

@@ -1,0 +1,7 @@
+{
+  "about": "A 'current' fact that changed after the models' training: on 2026-11-13 the Active LTS is Node 26 (v26.13.1, nodejs.org/dist/index.json); Opus and Sonnet said v24, from memory or from old pages, partly because think() never told them the date (#14). The check fails a v24 answer. Update it when Node 28 goes LTS (October 2027).",
+  "lines": [
+    { "speaker": "Ana", "text": "We should pin the runtime for the new service." },
+    { "speaker": "Ben", "text": "Cue, what's the current Node LTS version?", "expect": ["show_research", "caption"], "check": "(Node(\\.js)? ?|v)26(?![^.]{0,40}\\b(enters|will|due|scheduled|should|Current)\\b)[^.]{0,40}\\bLTS\\b|Lithium" }
+  ]
+}

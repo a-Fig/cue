@@ -5,10 +5,9 @@
 import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
-import net from "node:net";
 import { fileURLToPath } from "node:url";
 import { think } from "./agent.js";
-import { fetchReadable } from "./page.js";
+import { fetchReadable, isPublicHttpUrl } from "./page.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
@@ -39,24 +38,6 @@ async function readJson(req) {
     if (raw.length > 1_000_000) throw new Error("body too large");
   }
   return JSON.parse(raw || "{}");
-}
-
-// Refuse obvious internal addresses so /api/page can't be used to probe
-// the network the server runs on. (Doesn't stop DNS tricks; fine for a demo.)
-function isPublicHttpUrl(raw) {
-  let u;
-  try {
-    u = new URL(raw);
-  } catch {
-    return false;
-  }
-  if (!["http:", "https:"].includes(u.protocol)) return false;
-  const host = u.hostname.replace(/^\[|\]$/g, "");
-  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) return false;
-  if (net.isIP(host)) {
-    return !/^(10\.|127\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|::1$|f[cd]|fe80)/i.test(host);
-  }
-  return true;
 }
 
 const server = http.createServer(async (req, res) => {

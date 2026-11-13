@@ -1,0 +1,7 @@
+{
+  "about": "A question with no single right answer: estimates of desktop Linux share vary by source. Cue should answer and say the figure is an estimate or that sources differ, not state one number as fact (#14).",
+  "lines": [
+    { "speaker": "Kim", "text": "If we ship a Linux build, how many people would that even reach?" },
+    { "speaker": "Raj", "text": "Cue, what share of desktop users are on Linux?", "expect": ["show_research"], "check": "estimat|sources? (differ|vary|disagree)|depend|roughly|approximately|around|about|~" }
+  ]
+}
