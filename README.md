@@ -37,9 +37,15 @@ Open `http://localhost:3000/?test=1&token=<AGENT_TOKEN>` and type transcript lin
 
 ## Put it in a meeting
 
-1. Make the server public over HTTPS, e.g. `cloudflared tunnel --url http://localhost:3000`, and set `PUBLIC_URL` in `.env`.
-2. Add `RECALL_API_KEY` to `.env`.
-3. `npm run send-bot -- https://meet.google.com/xxx-xxxx-xxx`
+Add `RECALL_API_KEY` to `.env`, install [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/), then:
+
+```bash
+npm run cue -- https://meet.google.com/xxx-xxxx-xxx
+```
+
+This starts the server (or uses one already running), makes it public with a cloudflared quick tunnel (or uses `PUBLIC_URL` if that serves the page), sends the bot, and prints what it's doing. Admit Cue from the meeting's lobby. The bot leaves on Ctrl+C, after `CUE_MAX_MINUTES` (60 by default), or by itself once everyone else has left. Keep the laptop awake while it's in the call.
+
+`npm run send-bot -- <meeting-url>` only sends the bot, to a server already public at `PUBLIC_URL`.
 
 Recall streams the page at 1280×720 and 15 fps. Use its Bot Explorer to open DevTools on the page while the bot is in the call.
 
