@@ -1,20 +1,51 @@
+/* Cue's screen, styled from Cara's brand kit (brand/README.md, brand/tokens.css; 2026-11-13).
+   Ink is the screen while Cue listens; content (slides, research, diagrams) sits on a paper
+   sheet; Cue Blue is its voice on paper; lime is the highlighter, used only on ink or as a mark
+   behind ink text. The screen is seen shrunk into a Meet tile (~320×180 in gallery view), so
+   nothing a person reads is under 24px. */
 :root {
-  --bg: #0e1116;
-  --panel: #161b22;
-  --panel-2: #1d232c;
-  --line: #2a313c;
-  --text: #f2f5f8;
-  --text-2: #c3cbd6;   /* secondary text that still reads in a shrunk Meet tile */
-  --muted: #8b95a3;
-  --paper: #fbfaf6;
-  --paper-text: #1d1d1b;
-  --paper-muted: #6f6e68;
-  --accent: #7cc4ff;
-  --mark: #ffd75e;
-  --mark-text: #1a1400;
-  --ok: #46d389;
-  --busy: #f5b544;
-  --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --cue-blue: #3168b0;
+  --cue-lime: #ddff8f;
+  --cue-paper: #fefff4;
+  --cue-paper-dim: #eef0e0;
+  --cue-ink: #242515;
+  --cue-ink-muted: #6b6c5c;
+  --cue-line: #e4e6d6;
+  --cue-font-display: "Cal Sans", "Inter", system-ui, sans-serif;
+  --cue-font-body: "Lato", system-ui, sans-serif;
+  --cue-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --cue-radius-card: 28px;
+
+  /* The names the views use. On ink by default; .sheet redefines them for paper. Blue on ink
+     is only 2.8:1, so on ink the accent is lime. */
+  --bg: var(--cue-ink);
+  --panel: #2e2f1e;
+  --panel-2: #383a27;
+  --line: rgba(254, 255, 244, 0.14);
+  --text: var(--cue-paper);
+  --text-2: #d6d7c8;
+  --muted: #a9aa99;
+  --accent: var(--cue-lime);
+  --mark: var(--cue-lime);
+  --mark-text: var(--cue-ink);
+  --ok: var(--cue-lime);
+  --busy: #f5c451;
+  --bad: #ff8f7a;
+  --font: var(--cue-font-body);
+}
+
+/* A paper sheet: slides, research, diagrams. Views from public/views/ can add `sheet` too. */
+.sheet {
+  --bg: var(--cue-paper);
+  --panel: #ffffff;
+  --panel-2: var(--cue-paper-dim);
+  --line: var(--cue-line);
+  --text: var(--cue-ink);
+  --text-2: #3d3e2c;
+  --muted: var(--cue-ink-muted);
+  --accent: var(--cue-blue);
+  background: var(--bg);
+  color: var(--text);
 }
 
 * { box-sizing: border-box; }
@@ -39,33 +70,36 @@ html, body {
   overflow: hidden;
 }
 
-/* Status pill */
+/* Status pill: the mark, a state dot, what Cue is doing. Always ink, so it reads on paper too. */
 .status {
   position: absolute;
-  top: 18px;
+  top: 20px;
   left: 24px;
   z-index: 5;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 18px 8px 14px;
+  gap: 12px;
+  padding: 8px 20px 8px 14px;
   border-radius: 999px;
-  background: rgba(22, 27, 34, 0.85);
-  border: 1px solid var(--line);
-  font-size: 20px;
-  color: var(--text-2);
+  background: var(--cue-ink);
+  border: 1px solid rgba(254, 255, 244, 0.14);
+  font-size: 22px;
+  color: #d6d7c8;
 }
-.status #botName { color: var(--text); font-weight: 600; }
-.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ok); }
+.status .mark { height: 26px; width: auto; display: block; }
+.status .sep { display: none; }
+/* The name is the mark; the text stays for screen readers and Bot Explorer. */
+.status #botName { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--cue-lime); }
 .dot.busy { background: var(--busy); animation: blink 0.9s infinite alternate; }
-.dot.off { background: #c95a5a; }
+.dot.off { background: var(--bad); }
 @keyframes blink { to { opacity: 0.3; } }
 
 /* Views */
 .view {
   position: absolute;
   inset: 0;
-  padding: 80px 64px 96px;
+  padding: 96px 72px 120px;
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.45s ease, transform 0.45s ease;
@@ -73,60 +107,66 @@ html, body {
 }
 .view.active { opacity: 1; transform: none; pointer-events: auto; }
 
-/* Idle */
+/* Idle: the lockup on ink, and a quiet line saying it's listening. */
 .idle { display: grid; place-items: center; }
-.idle-mark { text-align: center; color: var(--muted); font-size: 22px; }
-.idle-mark .hint { font-size: 16px; opacity: 0.7; }
-.pulse {
-  width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%;
-  border: 2px solid var(--accent);
+.idle-mark { display: grid; justify-items: center; gap: 28px; text-align: center; }
+.idle-mark .logo { width: 300px; height: auto; display: block; }
+.idle-mark p { margin: 0; }
+.idle-mark .listening {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 28px; color: var(--text-2);
+}
+.idle-mark .listening::before {
+  content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--cue-lime);
   animation: breathe 3s ease-in-out infinite;
 }
-@keyframes breathe { 50% { transform: scale(1.15); opacity: 0.4; } }
+.idle-mark .hint { font-size: 24px; color: var(--muted); }
+@keyframes breathe { 50% { opacity: 0.25; } }
 .ticker {
-  position: absolute; left: 64px; right: 64px; bottom: 100px;
-  margin: 0; text-align: center; color: var(--muted); font-size: 16px; opacity: 0.6;
+  position: absolute; left: 72px; right: 72px; bottom: 56px;
+  margin: 0; text-align: center; color: var(--muted); font-size: 24px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* Slide */
-.slide h1, .diagram h1 { margin: 0 0 28px; font-size: 44px; letter-spacing: -0.02em; }
-.slide ul { margin: 0; padding: 0; list-style: none; }
+.slide h1, .diagram h1 {
+  margin: 0 0 32px; font: 400 56px/1.08 var(--cue-font-display); letter-spacing: -0.01em;
+}
+.slide ul { margin: 0; padding: 0; list-style: none; counter-reset: item; }
 .slide li {
   position: relative;
-  margin: 0 0 18px;
-  padding: 18px 24px 18px 56px;
-  border-radius: 14px;
+  margin: 0 0 16px;
+  padding: 16px 28px 16px 72px;
+  border-radius: 18px;
   background: var(--panel);
   border: 1px solid var(--line);
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1.3;
   animation: rise 0.4s ease both;
 }
 .slide li::before {
   content: counter(item);
   counter-increment: item;
-  position: absolute; left: 20px; top: 18px;
-  color: var(--accent); font-weight: 700;
+  position: absolute; left: 28px; top: 16px;
+  color: var(--accent); font: 400 30px/1.3 var(--cue-font-display);
 }
-.slide ul { counter-reset: item; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
 /* Diagram */
 .diagram-box {
-  height: 520px;
+  height: 500px;
   display: grid;
   place-items: center;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 20px;
+  border-radius: var(--cue-radius-card);
+  padding: 24px;
 }
-.diagram-box svg { max-width: 100%; max-height: 480px; height: auto; }
+.diagram-box svg { max-width: 100%; max-height: 452px; height: auto; }
 
 /* Research: the answer, sized for the back of the room (Google's answer box, keynote
    slides), and one excerpt from the page as evidence (Perplexity's sources, a featured
-   snippet). The screen is seen shrunk into a Meet tile, so nothing here is under 22px. */
+   snippet). */
 .research {
   display: grid; grid-template-columns: 1fr 520px; gap: 56px; align-items: center;
   padding: 84px 72px 136px; /* the bottom stays clear for the caption bar */
@@ -134,40 +174,40 @@ html, body {
 /* No verified quote (the site blocked us, or the quotes were not on the page): the answer
    alone, bigger, so the screen looks meant rather than half-empty. */
 .research.no-excerpt { grid-template-columns: 1fr; padding-left: 96px; }
+.research.no-excerpt .excerpt { display: none; }
 .research.no-excerpt .headline { font-size: 132px; }
 .research.no-excerpt .headline.long { font-size: 84px; }
 .research.no-excerpt .context { max-width: 36ch; font-size: 34px; }
-.research.no-excerpt .excerpt { display: none; }
 .answer { min-width: 0; }
-.kicker {
-  margin: 0 0 14px; color: var(--accent); font-size: 26px; font-weight: 600; letter-spacing: 0.01em;
-}
+.kicker { margin: 0 0 14px; color: var(--accent); font-size: 28px; font-weight: 700; }
 .headline {
-  margin: 0 0 22px; font-size: 96px; line-height: 1.02; font-weight: 750; letter-spacing: -0.035em;
-  overflow-wrap: anywhere;
+  margin: 0 0 22px; font: 400 104px/1.0 var(--cue-font-display); letter-spacing: -0.02em;
+  color: var(--accent); overflow-wrap: anywhere;
 }
-.headline.long { font-size: 64px; line-height: 1.08; letter-spacing: -0.025em; }
+.headline.long { font-size: 68px; line-height: 1.06; }
 .context {
   margin: 0 0 30px; max-width: 30ch; font-size: 30px; line-height: 1.35; color: var(--text-2);
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .source-chip {
   display: inline-flex; align-items: center; gap: 12px; margin: 0;
-  padding: 10px 18px 10px 12px; border-radius: 999px;
-  background: var(--panel-2); border: 1px solid var(--line); font-size: 24px; color: var(--text-2);
+  padding: 10px 20px 10px 12px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  font: 22px/1.2 var(--cue-font-mono); color: var(--text-2);
 }
 .source-chip img { width: 28px; height: 28px; border-radius: 6px; background: #fff; }
 .source-chip img[hidden] { display: none; }
 
 .excerpt {
-  margin: 0; padding: 30px 36px 24px; max-height: 100%; overflow: hidden; border-radius: 20px;
-  background: var(--paper); color: var(--paper-text);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  margin: 0; padding: 30px 36px 24px; max-height: 100%; overflow: hidden;
+  border-radius: var(--cue-radius-card);
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  box-shadow: 0 18px 50px rgba(36, 37, 21, 0.12);
   transition: opacity 0.35s ease;
 }
-.excerpt.loading blockquote { color: var(--paper-muted); font-style: italic; }
+.excerpt.loading blockquote { color: var(--muted); font-style: italic; }
 .excerpt figcaption {
-  margin: 0 0 16px; font-size: 22px; font-weight: 600; color: var(--paper-muted);
+  margin: 0 0 16px; font: 20px/1.3 var(--cue-font-mono); color: var(--muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .excerpt blockquote {
@@ -181,40 +221,41 @@ html, body {
 }
 @keyframes markin { from { background: transparent; } }
 .dots { display: flex; gap: 8px; margin: 18px 0 0; min-height: 10px; }
-.dots i { width: 10px; height: 10px; border-radius: 50%; background: #cfcfc9; }
-.dots i.on { background: var(--paper-text); }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.dots i.on { background: var(--accent); }
 
-/* Video */
-.video h1 { margin: 0 0 18px; font-size: 32px; letter-spacing: -0.01em; }
-.video { padding-top: 70px; }
+/* Video: on ink, so the picture is the brightest thing. */
+.video { padding-top: 84px; }
+.video h1 { margin: 0 0 18px; font: 400 36px/1.1 var(--cue-font-display); }
 .video-box {
-  height: 540px; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--line);
+  height: 520px; border-radius: 20px; overflow: hidden; background: #000; border: 1px solid var(--line);
 }
 .video-box video, .video-box iframe { width: 100%; height: 100%; border: 0; display: block; }
 
 /* Muted badge and screen cover */
 .muted-badge {
-  margin-left: 4px; padding: 1px 8px; border-radius: 999px;
-  background: #3a2326; color: #ff9b9b; font-size: 12px; font-weight: 600;
+  padding: 2px 10px; border-radius: 999px;
+  background: #4a2a22; color: #ffc2b5; font-size: 18px; font-weight: 700;
 }
 .muted-badge[hidden] { display: none; }
 .cover {
   position: absolute; inset: 0; z-index: 4;
   display: grid; place-content: center; text-align: center;
-  background: var(--bg); color: var(--muted); font-size: 26px;
+  background: var(--cue-ink); color: var(--text-2); font-size: 32px;
 }
 .cover[hidden] { display: none; }
-.cover p { margin: 0 0 8px; }
-.cover .hint { font-size: 16px; opacity: 0.7; }
+.cover p { margin: 0 0 10px; }
+.cover .hint { font-size: 24px; color: var(--muted); }
 
-/* Caption: a live-caption bar (Meet, YouTube): high contrast, low on the screen, gone in seconds. */
+/* Caption: a live-caption bar (Meet, YouTube): Lato Bold 32 on ink, low on the screen, gone in
+   seconds. Always ink, so it reads over paper views too. */
 .caption {
   position: absolute; left: 50%; bottom: 28px; z-index: 6;
   max-width: 1100px; padding: 14px 30px;
   transform: translate(-50%, 16px);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.88);
-  font-size: 30px; font-weight: 500; line-height: 1.3; text-align: center;
+  border-radius: 14px;
+  background: var(--cue-ink); color: var(--cue-paper);
+  font-size: 32px; font-weight: 700; line-height: 1.3; text-align: center;
   opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
 }
 .caption.show { opacity: 1; transform: translate(-50%, 0); }
@@ -224,12 +265,12 @@ html, body {
   position: fixed; right: 12px; bottom: 12px; z-index: 10; width: 340px;
   display: flex; flex-direction: column; gap: 6px;
   padding: 12px; border-radius: 10px;
-  background: #1b2029; border: 1px solid #39414e; font-size: 13px;
+  background: #1b2029; border: 1px solid #39414e; font-size: 13px; color: #e8ecf1;
 }
 .testpanel[hidden] { display: none; }
 .testpanel input, .testpanel textarea, .testpanel button {
-  font: inherit; color: var(--text); background: #0f1217; border: 1px solid #39414e; border-radius: 6px; padding: 6px 8px;
+  font: inherit; color: #e8ecf1; background: #0f1217; border: 1px solid #39414e; border-radius: 6px; padding: 6px 8px;
 }
 .testpanel button { cursor: pointer; }
 .testpanel .row { display: flex; gap: 6px; flex-wrap: wrap; }
-.testpanel pre { margin: 0; max-height: 140px; overflow: auto; color: var(--muted); white-space: pre-wrap; font-size: 11.5px; }
+.testpanel pre { margin: 0; max-height: 140px; overflow: auto; color: #8b95a3; white-space: pre-wrap; font-size: 11.5px; }

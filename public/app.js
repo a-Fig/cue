@@ -282,7 +282,15 @@ let mermaidLib;
 async function showDiagram({ title, mermaid }) {
   try {
     mermaidLib ||= (await import("https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs")).default;
-    mermaidLib.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict" });
+    // On the paper sheet, in the brand's colors: ink text, Cue Blue lines (brand/README.md).
+    mermaidLib.initialize({
+      startOnLoad: false, securityLevel: "strict", theme: "base",
+      themeVariables: {
+        background: "#ffffff", primaryColor: "#fefff4", primaryTextColor: "#242515",
+        primaryBorderColor: "#3168b0", lineColor: "#3168b0", secondaryColor: "#eef0e0",
+        tertiaryColor: "#ffffff", fontFamily: "Lato, system-ui, sans-serif", fontSize: "22px",
+      },
+    });
     const { svg } = await mermaidLib.render(`m${Date.now()}`, mermaid);
     $("diagramBox").innerHTML = svg;
     $("diagramTitle").textContent = title;
