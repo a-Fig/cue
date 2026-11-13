@@ -25,7 +25,7 @@ const PORT = String(30000 + Math.floor(Math.random() * 20000));
 const server = spawn(process.execPath, ["server.js"], {
   cwd: root,
   env: { ...process.env, PORT, AGENT_TOKEN: "ci-token", ANTHROPIC_API_KEY: "unused" },
-  stdio: ["ignore", "pipe", "inherit"],
+  stdio: ["ignore", "ignore", "inherit"],
 });
 const base = `http://127.0.0.1:${PORT}`;
 
@@ -55,4 +55,4 @@ try {
 } finally {
   server.kill();
 }
-process.exit(failed ? 1 : 0);
+process.exitCode = failed ? 1 : 0; // not process.exit(): exiting mid-kill trips a libuv assert on Windows
