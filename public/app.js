@@ -14,7 +14,7 @@ const TICK_MS = 4000;        // how often we consider thinking
 const QUIET_GAP_MS = 2500;   // wait for a pause in speech before thinking...
 const MAX_WAIT_MS = 15000;   // ...but never longer than this while people talk
 const CONTEXT_MS = 4 * 60 * 1000; // send the last ~4 minutes of transcript
-const CAPTION_MS = 12000;
+const CAPTION_MS = 7000;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -429,9 +429,13 @@ async function showResearch({ url, title, summary, highlights = [] }) {
 }
 
 let captionTimer;
+// Cue is shy (Tyler, 2026-11-13): one short sentence, sometimes two. Anything longer is cut
+// to its first two sentences, and a second sentence may wrap to a second line.
 function showCaption(text) {
   const el = $("caption");
-  el.textContent = text;
+  const sentences = String(text || "").trim().split(/(?<=[.!?])\s+/).filter(Boolean).slice(0, 2);
+  el.textContent = sentences.join(" ");
+  el.classList.toggle("two", sentences.length > 1);
   el.classList.add("show");
   clearTimeout(captionTimer);
   captionTimer = setTimeout(() => el.classList.remove("show"), CAPTION_MS);
