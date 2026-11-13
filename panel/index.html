@@ -3,70 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cue panel</title>
-  <link rel="icon" href="logo/logo-mark.svg">
+  <title>Cue</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cal+Sans&family=JetBrains+Mono&family=Lato:wght@400;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap">
   <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-  <header class="top">
-    <img class="logo" src="logo/logo-light-bg.svg" alt="Cue">
-    <span class="what">control panel</span>
-    <span class="dot" id="dot"></span>
+  <header class="topbar">
+    <span class="brand">cue</span>
+    <span class="crumb">control panel</span>
     <span class="spacer"></span>
-    <span class="conn" id="conn"></span>
+    <span class="pill" id="pill" hidden><span class="dot" id="dot"></span><span id="pillText"></span></span>
+    <button class="btn destructive" id="leaveBtn" type="button" hidden></button>
   </header>
 
-  <div class="problems" id="problems"></div>
+  <div class="alerts" id="problems"></div>
 
-  <!-- Before a call, and between calls: one composer and nothing else. -->
-  <section class="hero" id="hero">
-    <h1 id="heroTitle">Put Cue in a call</h1>
-    <p class="lede">Paste the meeting link. Cue joins as “Cue”, shares its screen and never speaks.</p>
-    <form id="sendForm">
+  <!-- Before a call, and between calls: one composer, nothing else. -->
+  <main class="landing" id="hero">
+    <h1 id="heroTitle">Send Cue to a meeting</h1>
+    <p class="sub">Paste the link. Cue joins as a participant, shares its screen and never speaks.</p>
+    <form class="composer" id="sendForm">
+      <svg class="icon muted-icon" viewBox="0 0 24 24"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
       <input id="meetingUrl" type="url" placeholder="https://meet.google.com/abc-defg-hij" autocomplete="off" spellcheck="false" required>
-      <button id="sendBtn" type="submit">Send Cue in</button>
+      <button class="btn primary" id="sendBtn" type="submit">Send Cue in <kbd>↵</kbd></button>
     </form>
     <p class="fine" id="fine"></p>
-  </section>
-
-  <main class="grid" id="live" hidden>
-    <section class="col">
-      <div class="card status" id="statusCard">
-        <p class="eyebrow" id="meetingLabel"></p>
-        <div class="headline">
-          <h1 id="phaseText"></h1>
-          <button class="danger" id="leaveBtn" type="button">Take Cue out</button>
-        </div>
-        <p class="detail" id="phaseDetail"></p>
-        <ol class="stepper" id="stepper"></ol>
-        <div class="meters" id="meters">
-          <div><span class="label">In for</span><span class="value" id="elapsed">0:00</span></div>
-          <div><span class="label" id="costLabel">Cost so far</span><span class="value" id="cost">$0.00</span></div>
-          <div><span class="label" id="leavesLabel">Leaves by itself</span><span class="value" id="leavesAt"></span></div>
-        </div>
-        <details class="log">
-          <summary>Details</summary>
-          <ol class="steps" id="steps"></ol>
-        </details>
-      </div>
-
-      <div class="card" id="screenCard">
-        <h3>On Cue's screen</h3>
-        <div class="screen" id="screen"></div>
-      </div>
-    </section>
-
-    <section class="col">
-      <div class="card feed-card">
-        <h3>What Cue hears and does</h3>
-        <ol class="feed" id="feed"></ol>
-        <p class="feed-end" id="feedEnd" hidden></p>
-      </div>
-    </section>
   </main>
+
+  <div class="app" id="live" hidden>
+    <aside class="rail">
+      <section class="group">
+        <h2 class="label">Meeting</h2>
+        <p class="meeting truncate" id="meetingLabel"></p>
+      </section>
+
+      <section class="group">
+        <h2 class="label">Progress</h2>
+        <ol class="timeline" id="stepper"></ol>
+        <p class="note" id="phaseDetail"></p>
+      </section>
+
+      <section class="group">
+        <h2 class="label">Usage</h2>
+        <dl class="stats">
+          <div><dt>Running for</dt><dd class="tabular" id="elapsed">0:00</dd></div>
+          <div><dt id="costLabel">Cost so far</dt><dd class="tabular" id="cost">$0.00</dd></div>
+          <div><dt id="leavesLabel">Leaves by itself</dt><dd class="tabular" id="leavesAt"></dd></div>
+        </dl>
+      </section>
+
+      <section class="group" id="screenCard">
+        <h2 class="label">On Cue's screen</h2>
+        <div class="screen" id="screen"></div>
+      </section>
+
+      <details class="group log">
+        <summary class="label">Log</summary>
+        <ol class="steps" id="steps"></ol>
+      </details>
+    </aside>
+
+    <section class="pane">
+      <header class="pane-head">
+        <div>
+          <h2 id="phaseText"></h2>
+          <p class="count" id="feedCount"></p>
+        </div>
+      </header>
+      <ol class="feed" id="feed"></ol>
+      <p class="feed-end" id="feedEnd" hidden></p>
+    </section>
+  </div>
 
   <script type="module" src="panel.js"></script>
 </body>
