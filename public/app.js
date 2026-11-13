@@ -63,9 +63,14 @@ function addLine(speaker, text) {
   state.transcript = state.transcript.filter((l) => t - l.t < CONTEXT_MS);
   state.lastLineAt = t;
   if (!state.pendingSince) state.pendingSince = t;
-  if (WAKE.test(text)) state.addressed = true;
   $("ticker").textContent = `${speaker}: ${text}`;
   localCommand(text);
+  // Someone spoke to Cue: think now rather than on the next tick, which could be up to
+  // TICK_MS away (#26). If a call is already running, its finally picks this up.
+  if (WAKE.test(text)) {
+    state.addressed = true;
+    maybeThink();
+  }
 }
 
 // Control phrases run instantly in the page, without waiting for Claude,
@@ -143,6 +148,7 @@ async function maybeThink(force = false) {
   } finally {
     state.busy = false;
     setStatus("listening");
+    if (state.addressed) maybeThink(); // spoken to while busy: answer now, not a tick later
   }
 }
 setInterval(maybeThink, TICK_MS);
