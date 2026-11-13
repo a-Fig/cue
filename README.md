@@ -10,9 +10,11 @@
 **The meeting participant that never says a word.**<br>
 It listens, and puts what the room needs on screen.
 
+It thinks at two speeds: [Jev](#how-cue-decides-jev-as-system-1) (System 1) decides in a fraction of a second whether to act,<br>and Claude (System 2) decides what to show.
+
 [![CI](https://github.com/a-Fig/cue/actions/workflows/ci.yml/badge.svg)](https://github.com/a-Fig/cue/actions/workflows/ci.yml) [![Node 22+](https://img.shields.io/badge/node-22%2B-3168B0)](package.json) [![License: MIT](https://img.shields.io/badge/license-MIT-3168B0)](LICENSE)
 
-[Try it](#try-it-in-a-minute) &nbsp;·&nbsp; [Put it in a call](#put-it-in-a-call) &nbsp;·&nbsp; [How it works](#how-it-works) &nbsp;·&nbsp; [Vision](docs/VISION.md)
+[Try it](#try-it-in-a-minute) &nbsp;·&nbsp; [Put it in a call](#put-it-in-a-call) &nbsp;·&nbsp; [How it works](#how-it-works) &nbsp;·&nbsp; [Jev as System 1](#how-cue-decides-jev-as-system-1) &nbsp;·&nbsp; [Vision](docs/VISION.md)
 
 <br>
 
@@ -76,6 +78,8 @@ cp .env.example .env    # set ANTHROPIC_API_KEY and AGENT_TOKEN
 npm start
 ```
 
+Add `OPENROUTER_API_KEY` to turn on [Jev](#how-cue-decides-jev-as-system-1); without it, Claude handles every tick.
+
 Open `http://localhost:3000/?test=1&token=<AGENT_TOKEN>`.
 Type transcript lines as if people were talking, or press **Demo script**.
 
@@ -124,10 +128,42 @@ flowchart LR
 3. When it isn't, **Claude** decides what to show, searching the web when it needs to, and returns one display action.
 4. The page renders it, and everyone in the call sees it.
 
-Being addressed with "Cue, …" skips Jev, and any Jev error falls through to Claude.
-Without `OPENROUTER_API_KEY`, every tick goes to Claude.
-
 There's no build step and no framework: a plain Node `http` server, plain ES modules in the page, and three dependencies.
+
+## How Cue decides: Jev as System 1
+
+Most of a meeting needs nothing on screen, so most of Cue's decisions are "stay quiet".
+Asking a large model that question every few seconds is slow and wasteful, so Cue splits the work:
+
+- **System 1, Jev** (TypeSafe's decision model `typesafe/jev-1.13`, through OpenRouter's [decisions API](https://openrouter.ai/api/alpha/decisions)), answers one question on every transcript tick: would putting something on the shared screen right now help?
+- **System 2, Claude**, runs only when Jev doesn't say a confident no. It decides what to show, and researches or draws it.
+
+```
+transcript tick
+   │
+   ├─ "Cue, …" in the last lines? ──────────────────────────► Claude
+   │
+   └─ Jev: would showing something help?
+         ├─ ≥ 0.7 sure "No" (JEV_QUIET_AT) ─► stay quiet, Claude never called
+         ├─ "Maybe" / "Yes" ────────────────────────────────► Claude
+         └─ error, or no answer within 2.5 s ───────────────► Claude
+```
+
+Jev only ever saves a call: a direct request skips it, and any failure falls through to Claude, so it can't swallow a request.
+
+Measured on the replay of typed meetings (2026-11-13, [#53](https://github.com/a-Fig/cue/pull/53)):
+
+| | Time | Cost |
+| --- | --- | --- |
+| Quiet tick settled by Jev | ~231 ms median | ~$0.00002 |
+| Quiet tick settled by Claude | ~1.6 s | ~$0.0019 |
+
+Jev settled 10 of the 22 quiet ticks on its own, none of them wrongly, and the replay missed nothing Cue should have shown.
+On a live server the same day, a quiet tick logged `[system 1 jev quiet 353ms]` and cost $0.000019.
+
+The server log tags every tick with `[system 1 jev act|quiet Nms]`, so you can watch the two systems split the work.
+
+Jev is on whenever `OPENROUTER_API_KEY` is set in `.env`. `CUE_GATE=off` turns it off, and every tick then goes to Claude. `JEV_QUIET_AT` (0.7 by default) sets how sure Jev must be before Cue stays quiet.
 
 ### What it costs
 
@@ -162,7 +198,8 @@ Everything lives in `.env` ([`.env.example`](.env.example) has the full list).
 | `AGENT_TOKEN` | A shared secret the page must carry (`?token=`), so strangers can't spend your Claude key. |
 | `RECALL_API_KEY`, `RECALL_REGION` | Sending the bot into a call. |
 | `PUBLIC_URL` | Where Recall can reach the page, if you don't want a quick tunnel. |
-| `OPENROUTER_API_KEY` | Turns on Jev as System 1. `CUE_GATE=off` turns it off again. |
+| `OPENROUTER_API_KEY` | Turns on Jev as System 1. |
+| `CUE_GATE`, `JEV_QUIET_AT` | `CUE_GATE=off` turns Jev off. `JEV_QUIET_AT` is how sure its "No" must be (0.7). |
 | `CLAUDE_MODEL`, `CLAUDE_EFFORT` | Which Claude, and how hard it thinks. |
 | `CUE_MAX_MINUTES` | When the bot leaves on its own. 60 by default. |
 
